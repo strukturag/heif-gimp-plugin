@@ -39,8 +39,6 @@
 #define DATA_KEY_VALS    "plug_in_template"
 #define DATA_KEY_UI_VALS "plug_in_template_ui"
 
-#define PARASITE_KEY     "plug-in-template-options"
-
 
 /*  Local function prototypes  */
 
@@ -122,12 +120,12 @@ query (void)
                              help_uri);
 
   gimp_install_procedure (LOAD_PROC,
-			  "Blurb",
-			  "Help",
+			  _("Load HEIF images."),
+                          _("Load image stored in HEIF format (High Efficiency Image File Format). Typical suffices for HEIF files are .heif, .heic."),
 			  "Dirk Farin <farin@struktur.de>",
 			  "Dirk Farin <farin@struktur.de>",
 			  "2018",
-			  N_("HEIF image"),
+			  _("Load HEIF image"),
 			  NULL,
 			  GIMP_PLUGIN,
 			  G_N_ELEMENTS (load_args),
@@ -135,7 +133,7 @@ query (void)
 			  load_args,
                           load_return_vals);
 
-  gimp_register_load_handler(LOAD_PROC, "heic,heif", "");
+  gimp_register_load_handler(LOAD_PROC, "heic,heif", ""); // TODO: 'avci'
 
   //  gimp_plugin_menu_register (PROCEDURE_NAME, "<Image>/Filters/Misc/");
 }

@@ -8,7 +8,7 @@
 # tools and you shouldn't use this script.  Just call ./configure
 # directly.
 
-PROJECT="GIMP Plug-In Template"
+PROJECT="GIMP HEIF format plugin"
 TEST_TYPE=-f
 FILE=src/render.c
 

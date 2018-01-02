@@ -109,6 +109,15 @@ if test "x$have_gimp_2_3" != "xyes"; then
 fi
 
 
+PKG_CHECK_MODULES([libheif], [libheif], [
+    AC_DEFINE([HAVE_LIBHEIF], [1], [Whether libheif was found.])
+    AC_SUBST(libheif_CFLAGS)
+    AC_SUBST(libheif_LIBS)
+    have_libheif="yes"
+], [have_libheif="no"])
+AM_CONDITIONAL([HAVE_HEIF], [test "x$have_libheif" = "xyes"])
+
+
 
 AC_CONFIG_FILES([
 Makefile

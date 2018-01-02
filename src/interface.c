@@ -1,28 +1,20 @@
-/* GIMP Plug-in Template
- * Copyright (C) 2000-2004  Michael Natterer <mitch@gimp.org> (the "Author").
- * All Rights Reserved.
+/*
+ * GIMP HEIF loader / write plugin.
+ * Copyright (c) 2018 struktur AG, Dirk Farin <farin@struktur.de>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * This file is part of gimp-libheif-plugin.
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * gimp-libheif-plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Except as contained in this notice, the name of the Author of the
- * Software shall not be used in advertising or otherwise to promote the
- * sale, use or other dealings in this Software without prior written
- * authorization from the Author.
+ * gimp-libheif-plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *                                                                                                                                                                                                                  * You should have received a copy of the GNU General Public License
+ * along with gimp-libheif-plugin.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "config.h"
@@ -64,6 +56,7 @@ dialog (gint32              image_ID,
 	PlugInDrawableVals *drawable_vals,
 	PlugInUIVals       *ui_vals)
 {
+#if 0
   GtkWidget *dlg;
   GtkWidget *main_vbox;
   GtkWidget *frame;
@@ -229,6 +222,8 @@ dialog (gint32              image_ID,
   gtk_widget_destroy (dlg);
 
   return run;
+#endif
+  return TRUE;
 }
 
 

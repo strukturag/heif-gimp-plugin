@@ -1,28 +1,20 @@
-/* GIMP Plug-in Template
- * Copyright (C) 2000  Michael Natterer <mitch@gimp.org> (the "Author").
- * All Rights Reserved.
+/*
+ * GIMP HEIF loader / write plugin.
+ * Copyright (c) 2018 struktur AG, Dirk Farin <farin@struktur.de>
  *
- * Permission is hereby granted, free of charge, to any person obtaining a
- * copy of this software and associated documentation files (the "Software"),
- * to deal in the Software without restriction, including without limitation
- * the rights to use, copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons to whom the
- * Software is furnished to do so, subject to the following conditions:
+ * This file is part of gimp-libheif-plugin.
  *
- * The above copyright notice and this permission notice shall be included
- * in all copies or substantial portions of the Software.
+ * gimp-libheif-plugin is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
- * THE AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
- * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- *
- * Except as contained in this notice, the name of the Author of the
- * Software shall not be used in advertising or otherwise to promote the
- * sale, use or other dealings in this Software without prior written
- * authorization from the Author.
+ * gimp-libheif-plugin is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *                                                                                                                                                                                                                  * You should have received a copy of the GNU General Public License
+ * along with gimp-libheif-plugin.  If not, see <http://www.gnu.org/licenses/>.
  */
 
 #include "config.h"
@@ -34,14 +26,15 @@
 
 #include "main.h"
 #include "interface.h"
-#include "render.h"
 
 #include "plugin-intl.h"
+
+#include "libheif/heif.h"
 
 
 /*  Constants  */
 
-#define PROCEDURE_NAME   "gimp_plugin_template"
+#define LOAD_PROC   "load_heif_file"
 
 #define DATA_KEY_VALS    "plug_in_template"
 #define DATA_KEY_UI_VALS "plug_in_template_ui"
@@ -107,17 +100,17 @@ query (void)
   gchar *help_path;
   gchar *help_uri;
 
-  static GimpParamDef args[] =
-  {
-    { GIMP_PDB_INT32,    "run_mode",   "Interactive, non-interactive"    },
-    { GIMP_PDB_IMAGE,    "image",      "Input image"                     },
-    { GIMP_PDB_DRAWABLE, "drawable",   "Input drawable"                  },
-    { GIMP_PDB_INT32,    "dummy",      "dummy1"                          },
-    { GIMP_PDB_INT32,    "dummy",      "dummy2"                          },
-    { GIMP_PDB_INT32,    "dummy",      "dummy3"                          },
-    { GIMP_PDB_INT32,    "seed",       "Seed value (used only if randomize is FALSE)" },
-    { GIMP_PDB_INT32,    "randomize",  "Use a random seed (TRUE, FALSE)" }
-  };
+  static const GimpParamDef load_args[] =
+    {
+      { GIMP_PDB_INT32,  "run-mode",     "The run mode { RUN-NONINTERACTIVE (1) }" },
+      { GIMP_PDB_STRING, "filename",     "The name of the file to load" },
+      { GIMP_PDB_STRING, "raw-filename", "The name entered"             }
+    };
+
+  static const GimpParamDef load_return_vals[] =
+    {
+      { GIMP_PDB_IMAGE, "image", "Output image" }
+    };
 
   gimp_plugin_domain_register (PLUGIN_NAME, LOCALEDIR);
 
@@ -128,20 +121,114 @@ query (void)
   gimp_plugin_help_register ("http://developer.gimp.org/plug-in-template/help",
                              help_uri);
 
-  gimp_install_procedure (PROCEDURE_NAME,
+  gimp_install_procedure (LOAD_PROC,
 			  "Blurb",
 			  "Help",
-			  "Michael Natterer <mitch@gimp.org>",
-			  "Michael Natterer <mitch@gimp.org>",
-			  "2000-2004",
-			  N_("Plug-In Template..."),
-			  "RGB*, GRAY*, INDEXED*",
+			  "Dirk Farin <farin@struktur.de>",
+			  "Dirk Farin <farin@struktur.de>",
+			  "2018",
+			  N_("HEIF image"),
+			  NULL,
 			  GIMP_PLUGIN,
-			  G_N_ELEMENTS (args), 0,
-			  args, NULL);
+			  G_N_ELEMENTS (load_args),
+			  G_N_ELEMENTS (load_return_vals),
+			  load_args,
+                          load_return_vals);
 
-  gimp_plugin_menu_register (PROCEDURE_NAME, "<Image>/Filters/Misc/");
+  gimp_register_load_handler(LOAD_PROC, "heic,heif", "");
+
+  //  gimp_plugin_menu_register (PROCEDURE_NAME, "<Image>/Filters/Misc/");
 }
+
+
+int clip(int x)
+{
+  if (x<0) return 0;
+  if (x>255) return 255;
+  return x;
+}
+
+gint32 load_heif(const gchar *name, GError **error)
+{
+  struct heif_context* ctx = heif_context_alloc();
+  heif_context_read_from_file(ctx, name);
+
+  struct heif_pixel_image* img = 0;
+  heif_context_get_primary_image(ctx, &img);
+
+  int strideY;
+  const uint8_t* dataY = heif_pixel_image_get_plane_readonly(img, heif_channel_Y, &strideY);
+
+  int strideCb;
+  const uint8_t* dataCb = heif_pixel_image_get_plane_readonly(img, heif_channel_Cb, &strideCb);
+
+  int strideCr;
+  const uint8_t* dataCr = heif_pixel_image_get_plane_readonly(img, heif_channel_Cr, &strideCr);
+
+  int width = heif_pixel_image_get_width(img, heif_channel_Y);
+  int height = heif_pixel_image_get_height(img, heif_channel_Y);
+
+
+  // --- create GIMP image and copy HEIF image into the GIMP image (converting it to RGB)
+
+  gint32 image_ID = gimp_image_new(width, height, GIMP_RGB);
+  gimp_image_set_filename(image_ID, name);
+
+  gint32 layer_ID = gimp_layer_new(image_ID,
+                                   "image content",
+                                   width,height,
+                                   GIMP_RGB_IMAGE,
+                                   100.0,
+                                   GIMP_NORMAL_MODE);
+
+  gboolean success = gimp_image_insert_layer(image_ID,
+                                             layer_ID,
+                                             0, // gint32 parent_ID,
+                                             0); // gint position);
+
+
+  GimpDrawable *drawable = gimp_drawable_get(layer_ID);
+
+  GimpPixelRgn rgn_out;
+  gimp_pixel_rgn_init (&rgn_out,
+                       drawable,
+                       0,0,
+                       width,height,
+                       TRUE, TRUE);
+
+  guchar* buf = alloca(width*3);
+
+  int x,y;
+  for (y=0;y<height;y++) {
+    for (x=0;x<width;x++) {
+      int yv = dataY[y*strideY + x] - 16;
+      int uv = dataCb[y/2*strideCb + x/2] - 128;
+      int vv = dataCr[y/2*strideCr + x/2] - 128;
+
+      float y_val = 1.164 * yv;
+      buf[3*x + 0] = clip(y_val + 1.596 * vv);
+      buf[3*x + 1] = clip(y_val - 0.813 * vv - 0.391 * uv);
+      buf[3*x + 2] = clip(y_val + 2.018 * uv);
+    }
+
+    gimp_pixel_rgn_set_row(&rgn_out,
+                           buf,
+                           0,y,width);
+  }
+
+  gimp_drawable_flush (drawable);
+  gimp_drawable_merge_shadow (drawable->drawable_id, TRUE);
+  gimp_drawable_update (drawable->drawable_id,
+                        0,0, width,height);
+
+  gimp_drawable_detach(drawable);
+
+  // TODO: release pixel image
+  heif_context_free(ctx);
+
+  return image_ID;
+}
+
 
 static void
 run (const gchar      *name,
@@ -150,11 +237,12 @@ run (const gchar      *name,
      gint             *nreturn_vals,
      GimpParam       **return_vals)
 {
-  static GimpParam   values[1];
+  static GimpParam   values[2];
   GimpDrawable      *drawable;
   gint32             image_ID;
   GimpRunMode        run_mode;
   GimpPDBStatusType  status = GIMP_PDB_SUCCESS;
+  GError            *error  = NULL;
 
   *nreturn_vals = 1;
   *return_vals  = values;
@@ -167,8 +255,8 @@ run (const gchar      *name,
   textdomain (GETTEXT_PACKAGE);
 
   run_mode = param[0].data.d_int32;
-  image_ID = param[1].data.d_int32;
-  drawable = gimp_drawable_get (param[2].data.d_drawable);
+  //image_ID = param[1].data.d_int32;
+  //drawable = gimp_drawable_get (param[2].data.d_drawable);
 
   /*  Initialize with default values  */
   vals          = default_vals;
@@ -176,6 +264,40 @@ run (const gchar      *name,
   drawable_vals = default_drawable_vals;
   ui_vals       = default_ui_vals;
 
+  if (strcmp (name, LOAD_PROC) == 0)
+    {
+      switch (run_mode)
+        {
+        case GIMP_RUN_INTERACTIVE:
+          break;
+
+        case GIMP_RUN_NONINTERACTIVE:
+          /*  Make sure all the arguments are there!  */
+          if (n_params != 3)
+            status = GIMP_PDB_CALLING_ERROR;
+          break;
+
+        default:
+          break;
+        }
+
+      if (status == GIMP_PDB_SUCCESS)
+        {
+          image_ID = load_heif (param[1].data.d_string, &error);
+
+          if (image_ID != -1)
+            {
+              *nreturn_vals = 2;
+              values[1].type         = GIMP_PDB_IMAGE;
+              values[1].data.d_image = image_ID;
+            }
+          else
+            {
+              status = GIMP_PDB_EXECUTION_ERROR;
+            }
+        }
+    }
+#if 0
   if (strcmp (name, PROCEDURE_NAME) == 0)
     {
       switch (run_mode)
@@ -222,6 +344,7 @@ run (const gchar      *name,
 	  break;
 	}
     }
+#endif
   else
     {
       status = GIMP_PDB_CALLING_ERROR;
@@ -229,6 +352,7 @@ run (const gchar      *name,
 
   if (status == GIMP_PDB_SUCCESS)
     {
+#if 0
       render (image_ID, drawable, &vals, &image_vals, &drawable_vals);
 
       if (run_mode != GIMP_RUN_NONINTERACTIVE)
@@ -241,6 +365,7 @@ run (const gchar      *name,
 	}
 
       gimp_drawable_detach (drawable);
+#endif
     }
 
   values[0].type = GIMP_PDB_STATUS;

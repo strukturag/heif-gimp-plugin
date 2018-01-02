@@ -9,9 +9,7 @@ gimp_plugin_template_SOURCES = \
 	interface.c	\
 	interface.h	\
 	main.c		\
-	main.h		\
-	render.c	\
-	render.h
+	main.h
 
 AM_CPPFLAGS = \
 	-DLOCALEDIR=\""$(LOCALEDIR)"\"		\
@@ -22,5 +20,7 @@ INCLUDES =\
 	@GIMP_CFLAGS@		\
 	-I$(includedir)
 
-LDADD = $(GIMP_LIBS)
+# LDADD = $(GIMP_LIBS)
 
+gimp_plugin_template_CFLAGS = $(libheif_CFLAGS)
+gimp_plugin_template_LDADD = $(libheif_LIBS) $(GIMP_LIBS)

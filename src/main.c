@@ -153,20 +153,23 @@ gint32 load_heif(const gchar *name, GError **error)
   struct heif_context* ctx = heif_context_alloc();
   heif_context_read_from_file(ctx, name);
 
-  struct heif_pixel_image* img = 0;
-  heif_context_get_primary_image(ctx, &img);
+  struct heif_image_handle* handle = 0;
+  heif_context_get_primary_image_handle(ctx, &handle);
+
+  struct heif_image* img = 0;
+  struct heif_error err = heif_decode_image(ctx, handle, &img);
 
   int strideY;
-  const uint8_t* dataY = heif_pixel_image_get_plane_readonly(img, heif_channel_Y, &strideY);
+  const uint8_t* dataY = heif_image_get_plane_readonly(img, heif_channel_Y, &strideY);
 
   int strideCb;
-  const uint8_t* dataCb = heif_pixel_image_get_plane_readonly(img, heif_channel_Cb, &strideCb);
+  const uint8_t* dataCb = heif_image_get_plane_readonly(img, heif_channel_Cb, &strideCb);
 
   int strideCr;
-  const uint8_t* dataCr = heif_pixel_image_get_plane_readonly(img, heif_channel_Cr, &strideCr);
+  const uint8_t* dataCr = heif_image_get_plane_readonly(img, heif_channel_Cr, &strideCr);
 
-  int width = heif_pixel_image_get_width(img, heif_channel_Y);
-  int height = heif_pixel_image_get_height(img, heif_channel_Y);
+  int width = heif_image_get_width(img, heif_channel_Y);
+  int height = heif_image_get_height(img, heif_channel_Y);
 
 
   // --- create GIMP image and copy HEIF image into the GIMP image (converting it to RGB)
@@ -223,7 +226,8 @@ gint32 load_heif(const gchar *name, GError **error)
 
   gimp_drawable_detach(drawable);
 
-  // TODO: release pixel image
+  heif_image_release(img);
+  heif_image_handle_release(handle);
   heif_context_free(ctx);
 
   return image_ID;

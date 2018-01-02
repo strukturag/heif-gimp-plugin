@@ -23,12 +23,15 @@
 
 /*  Public functions  */
 
-gboolean   dialog (gint32              image_ID,
+gboolean   dialog (int num_images,
+                   int primary_image,
+                   UIResult* ui_vals);
+/*
 		   GimpDrawable       *drawable,
 		   PlugInVals         *vals,
 		   PlugInImageVals    *image_vals,
 		   PlugInDrawableVals *drawable_vals,
 		   PlugInUIVals       *ui_vals);
-
+*/
 
 #endif /* __INTERFACE_H__ */

@@ -151,8 +151,35 @@ gint32 load_heif(const gchar *name, GError **error)
   struct heif_context* ctx = heif_context_alloc();
   heif_context_read_from_file(ctx, name);
 
+  int num = heif_context_get_number_of_images(ctx);
+  //int primary = heif_context_get_primary_image_index(ctx);
+
+  int primary = -1;
+  int i;
+  for (i=0; i<num; i++) {
+    struct heif_image_handle* h;
+    heif_context_get_image_handle(ctx, i, &h);
+    if (heif_context_is_primary_image(ctx, h)) {
+      primary = i;
+    }
+    heif_image_handle_release(h);
+  }
+
+  UIResult result;
+  result.selected_image = primary;
+
+  if (num > 1) {
+    dialog(num,primary,&result);
+
+    printf("selected idx: %d\n", result.selected_image);
+  }
+
   struct heif_image_handle* handle = 0;
-  heif_context_get_primary_image_handle(ctx, &handle);
+  //heif_context_get_primary_image_handle(ctx, &handle);
+  heif_context_get_image_handle(ctx, result.selected_image, &handle);
+
+  //drawable,
+  //        &vals, &image_vals, &drawable_vals, &ui_vals);
 
   struct heif_image* img = 0;
   struct heif_error err = heif_decode_image(ctx, handle, &img);

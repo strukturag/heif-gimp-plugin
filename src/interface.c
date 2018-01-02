@@ -49,14 +49,19 @@ static PlugInUIVals *ui_state = NULL;
 /*  Public functions  */
 
 gboolean
-dialog (gint32              image_ID,
+dialog (int num_images,
+        int primary_image,
+        UIResult* ui_result)
+
+/*
+image_ID,
 	GimpDrawable       *drawable,
 	PlugInVals         *vals,
 	PlugInImageVals    *image_vals,
 	PlugInDrawableVals *drawable_vals,
 	PlugInUIVals       *ui_vals)
+*/
 {
-#if 0
   GtkWidget *dlg;
   GtkWidget *main_vbox;
   GtkWidget *frame;
@@ -71,13 +76,13 @@ dialog (gint32              image_ID,
   GimpUnit   unit;
   gdouble    xres, yres;
 
-  ui_state = ui_vals;
+  //ui_state = ui_vals;
 
   gimp_ui_init (PLUGIN_NAME, TRUE);
 
-  dlg = gimp_dialog_new (_("GIMP Plug-In Template"), PLUGIN_NAME,
+  dlg = gimp_dialog_new (_("Select image"), PLUGIN_NAME,
                          NULL, 0,
-			 gimp_standard_help_func, "plug-in-template",
+			 gimp_standard_help_func, "plug-in-template", // TODO
 
 			 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
 			 GTK_STOCK_OK,     GTK_RESPONSE_OK,
@@ -94,6 +99,24 @@ dialog (gint32              image_ID,
   gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
   gtk_widget_show (frame);
 
+
+  GtkWidget* combobox = gtk_combo_box_text_new();
+
+  int i;
+  for (i = 0; i < num_images; i++)
+    {
+      gchar some_data[20];
+      sprintf(some_data,"image %d%s",i+1,
+              i == primary_image ? " (primary)" : "");
+      gtk_combo_box_text_append_text(combobox, some_data);
+    }
+
+  gtk_combo_box_set_active (combobox, primary_image);
+
+  gtk_container_add (GTK_CONTAINER (frame), combobox);
+  gtk_widget_show(combobox);
+
+#if 0
   table = gtk_table_new (3, 3, FALSE);
   gtk_table_set_col_spacings (GTK_TABLE (table), 6);
   gtk_table_set_row_spacings (GTK_TABLE (table), 2);
@@ -156,8 +179,8 @@ dialog (gint32              image_ID,
   gtk_container_add (GTK_CONTAINER (frame), hbox);
   gtk_widget_show (hbox);
 
-  unit = gimp_image_get_unit (image_ID);
-  gimp_image_get_resolution (image_ID, &xres, &yres);
+  //OBS unit = gimp_image_get_unit (image_ID);
+  //OBS gimp_image_get_resolution (image_ID, &xres, &yres);
 
   coordinates = gimp_coordinates_new (unit, "%p", TRUE, TRUE, SPIN_BUTTON_WIDTH,
 				      GIMP_SIZE_ENTRY_UPDATE_SIZE,
@@ -206,6 +229,7 @@ dialog (gint32              image_ID,
 			     _("RGB Images:"), 0.0, 0.5, combo, 1, FALSE);
 
   /*  Show the main containers  */
+#endif
 
   gtk_widget_show (main_vbox);
   gtk_widget_show (dlg);
@@ -215,15 +239,17 @@ dialog (gint32              image_ID,
   if (run)
     {
       /*  Save ui values  */
+      /*
       ui_state->chain_active =
         gimp_chain_button_get_active (GIMP_COORDINATES_CHAINBUTTON (coordinates));
+      */
+
+      ui_result->selected_image = gtk_combo_box_get_active(combobox);
     }
 
   gtk_widget_destroy (dlg);
 
   return run;
-#endif
-  return TRUE;
 }
 
 

@@ -46,6 +46,12 @@ typedef struct
 } PlugInUIVals;
 
 
+typedef struct
+{
+  int selected_image;
+} UIResult;
+
+
 /*  Default values  */
 
 extern const PlugInVals         default_vals;

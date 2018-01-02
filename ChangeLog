@@ -1,0 +1,347 @@
+2004-12-29  Sven Neumann  <sven@gimp.org>
+
+	* Made 2.2.0 release.
+
+2004-12-05  Sven Neumann  <sven@gimp.org>
+
+	* src/main.c: use gimp_plugin_menu_register() to register the
+	procedure in the menus.
+
+	* src/interface.c: removed GimpPixmap examples. Use combo-boxes
+	instead of option-menus. Changed spacings for HIG compliance.
+
+	* Makefile.am
+	* pixmaps/zoom_in.xpm
+	* pixmaps/zoom_out.xpm: removed now unused pixmaps.
+
+2004-12-05  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: bumped version to 2.2.0. Depend on GIMP >= 2.2.0.
+	Disabled APIs deprecated for GTK+ 2.6 and GIMP 2.2.
+
+	* src/interface.c: undef GIMP_DISABLE_DEPRECATED for now.
+
+2004-11-25  Sven Neumann  <sven@gimp.org>
+
+	* autogen.sh: handle automake-1.9, synced with gimp's autogen.sh.
+
+2004-04-04  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: bumped version to 2.0.0.
+
+	* README: minor update.
+
+	* help/en/Makefile.am
+	* help/en/gimp-plugin-template.html: removed this file
+
+	* help/en/index.html: and moved the content here. One help page
+	should be enough to explain the concept.
+
+2004-03-18  Michael Natterer  <mitch@gimp.org>
+
+	* configure.in: fixed definition of DATADIR.
+
+	Moved help files from "C" to "en":
+
+	* help/gimp-help.xml
+	* help/C/.cvsignore
+	* help/C/Makefile.am
+	* help/C/gimp-plugin-template.html
+	* help/C/index.html: removed.
+
+	* help/en/.cvsignore
+	* help/en/Makefile.am
+	* help/en/gimp-help.xml
+	* help/en/gimp-plugin-template.html
+	* help/en/index.html: added.
+
+	* help/Makefile.am: changed accordingly.
+
+2004-02-02  Sven Neumann  <sven@gimp.org>
+
+	* Made 1.3.3 release.
+
+2004-02-02  Sven Neumann  <sven@gimp.org>
+
+	* autogen.sh: also check for automake-1.8.
+
+2004-02-01  Michael Natterer  <mitch@gimp.org>
+
+	* src/interface.[ch]
+	* src/render.[ch]: #include and trailing whitespace cleanup.
+
+	* src/main.c: added example which shows how to pass both "seed"
+	and "randomize" and how to store and retreive them from the
+	plug-in's arguments and from the last_vals struct correctly.
+
+2004-01-28  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: use AC_CONFIG_FILES.
+
+2004-01-27  Manish Singh  <yosh@gimp.org>
+
+	* src/Makefile.am
+	* configure.in: redid the versioning magic, some cleanup.
+
+2004-01-27  Sven Neumann  <sven@gimp.org>
+
+	* autogen.sh
+	* configure.in: simplified by using PKG_CHECK_MODULES instead of
+	AM_PATH_GIMP_2_0.
+
+2004-01-27  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: removed use of $DATADIRNAME in favor of $datadir.
+	Use pkg-config instead of gimptool-1.3.
+
+	* src/Makefile.am: use GIMP_LIBDIR.
+
+2004-01-20  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: check for gimp >= 1.3.24; bumped version to 1.3.3.
+
+	* src/interface.c
+	* src/main.{ch]: adapt to changed API of gimp_random_seed_new().
+
+2003-12-04  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: only use FOO_DISABLE_DEPRECATED in CPPFLAGS when
+	compiling against gtk+ <= 2.3.0. Fixes bug #128550.
+
+2003-11-29  Sven Neumann  <sven@gimp.org>
+
+	* Made 1.3.2 release.
+
+2003-11-29  Sven Neumann  <sven@gimp.org>
+
+	* src/render.c (render): added a g_message() so something happens
+	when clicking the OK button.
+
+	* HACKING: updated.
+
+2003-11-29  Sven Neumann  <sven@gimp.org>
+
+	* debian/Makefile.am
+	* help/C/Makefile.am
+	* help/images/Makefile.am: minor cleanups.
+
+	* help/Makefile.am
+	* help/gimp-help.xml: added a mapping file for the GIMP help system.
+
+	* src/interface.c: register help for the dialog.
+
+2003-11-29  Sven Neumann  <sven@gimp.org>
+
+	* autogen.sh: updates based on the autogen.sh script in GIMP.
+
+2003-11-11  Sven Neumann  <sven@gimp.org>
+
+	* src/interface.c (dialog): use gimp_dialog_run().
+
+2003-11-06  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: depend on GIMP >= 1.3.23. Bumped version to 1.3.2.
+	
+	* src/interface.c: updated for new GimpDialog API.
+
+	* src/main.c: updated for new GimpHelp API.
+
+2003-07-25  Sven Neumann  <sven@gimp.org>
+
+	* Made 1.3.1 release.
+
+2003-07-25  Sven Neumann  <sven@gimp.org>
+
+	* Makefile.am (DISTCLEANFILES): added intltool-extract and friends.
+
+2003-07-22  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: use AM_PATH_GIMP_2_0(), changed the gettext domain
+	to gimp20-plugin-template.
+
+2003-07-06  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: depend on GIMP >= 1.3.17.
+
+	* src/main.c: added const qualifiers as expected by
+	libgimp >= 1.3.17.
+
+2003-03-25  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: depend on GIMP >= 1.3.14.
+	
+	* src/plugin-intl.h: only define the gettext macros here.
+	
+	* src/main.c: bind to the plug-in textdomain, GIMP takes care of
+	the rest.
+
+2003-03-10  Manish Singh  <yosh@gimp.org>
+
+	* src/main.c: #include <string.h> for strcmp
+
+	* Makefile.am (EXTRA_DIST): include HACKING
+
+2003-03-09  Sven Neumann  <sven@gimp.org>
+
+	* COPYING
+	* src/*.[ch]: relicensed to a less restrictive X11-style license.
+	Thanks to Adam D. Moss <adam@gimp.org> for providing the patch for
+	this change.
+
+	* configure.in: bumped version to 1.3.1.
+
+2003-03-05  Sven Neumann  <sven@gimp.org>
+
+	* Made 1.3.0 release.
+
+2003-03-05  Sven Neumann  <sven@gimp.org>
+
+	* Makefile.am (EXTRA_DIST): include autogen.sh and the
+	intltool*.in files.
+
+	* src/Makefile.am: please automake-1.7.
+
+2003-03-05  Sven Neumann  <sven@gimp.org>
+
+	* acconfig.h: removed this file.
+
+	* README
+	* configure.in
+	* src/interface.c
+	* src/main.c
+	* src/main.h: various changes to make it compile with GIMP >= 1.3.11.
+
+2002-06-03  Stanislav Visnovsky  <visnovsky@nenya.ms.mff.cuni.cz>
+
+	* README: Added notice about po/README.translators.
+
+2002-05-14  Sven Neumann  <sven@gimp.org>
+
+	* configure.in: check for bind_textdomain_codeset.
+
+2002-04-16  Sven Neumann  <sven@gimp.org>
+
+	* autogen.sh: call glib-gettextize and intltoolize.
+
+	* configure.in: require at least gimp-1.3.5. Use AC_PROG_INTLTOOL
+	and AM_GLIB_GNU_GETTEXT for i18n.
+	
+	* src/interface.c (dialog_ok_callback): made it compile again.
+
+2002-01-15  Sven Neumann  <sven@gimp.org>
+
+	* HACKING
+	* Makefile.am
+	* acconfig.h
+	* autogen.sh
+	* configure.in
+	* src/Makefile.am
+	* src/interface.c
+	* src/main.c
+	* src/plugin-intl.h: use gimp-1.3.
+
+2001-12-26  Pablo Saratxaga  <pablo@mandrakesoft.com>
+
+	* configure.in: Added "az" to ALL_LINGUAS.
+
+2001-12-21  Stanislav Visnovsky  <visnovsky@nenya.ms.mff.cuni.cz>
+
+	* configure.in: Added "sk" to ALL_LINGUAS.
+
+2001-11-09  Christian Rose  <menthos@menthos.com>
+
+	* configure.in: Added "sv" to ALL_LINGUAS.
+
+2001-10-20  Christophe Merlet  <redfox@eikonex.org>
+
+	* configure.in: Added "fr" to $ALL_LINGUAS.
+
+2001-08-31  Abel Cheung  <maddog@linux.org.hk>
+
+	* configure.in (ALL_LINGUAS): zh_TW.Big5 -> zh_TW
+
+2001-07-12  Abel Cheung  <maddog@linux.org.hk>
+
+	* configure.in: added zh_TW.Big5 (traditional Chinese) to ALL_LINGUAS
+
+2001-07-12  Michael Natterer  <mitch@gimp.org>
+
+	* made 1.2.0 release.
+
+2001-07-12  Michael Natterer  <mitch@gimp.org>
+
+	* README: updated.
+
+	* src/main.h
+	* src/interface.c: added image & drawable menu examples.
+
+2001-07-12  Michael Natterer  <mitch@gimp.org>
+
+	* autogen.sh: allow newer auto* version strings.
+
+	* configure.in: bumped version number to 1.2.0, require gimp 1.2.1.
+
+	* src/Makefile.am
+	* src/interface.h
+	* src/main.h
+	* src/render.h: minor cleanups.
+
+2000-08-28  Michael Natterer  <mitch@gimp.org>
+
+	* configure.in
+	* src/interface.c
+	* src/main.c: removed COMPAT_CRUFT
+
+2000-08-25  Kevin Turner  <acapnotic@users.sourceforge.net>
+
+	* src/Makefile.am (LDADD): Remove GTK_LIBS, as these are included in 
+	GIMP_LIBS.
+
+2000-06-24  Sven Neumann  <sven@gimp.org>
+
+	* autogen.sh: applied patch from Sesse <sgunderson@bigfoot.com>
+	that fixes the check for recent versions of auto[conf|make].
+	
+	* configure.in: we require gimp-1.1.24 and gtk+-1.2.8
+
+2000-06-14  Michael Natterer  <mitch@gimp.org>
+
+	* configure.in
+	* debian/*: new directory.
+
+	A patch from Kevin Turner <acapnotic@users.sourceforge.net> which
+	adds a debian packet description.
+
+2000-06-14  Michael Natterer  <mitch@gimp.org>
+
+	* src/Makefile.am: disable all Gimp compatibility defines.
+
+	* src/interface.[ch]
+	* src/main.[ch]
+	* src/plugin-intl.h
+	* src/render.[ch]: some (not yet finished) code to show how to
+	store stuff per drawable and per image through parasites.
+	Minor fixes.
+
+2000-05-24  Michael Natterer  <mitch@gimp.org>
+
+	* src/main.c: register for all image types.
+
+2000-05-24  Michael Natterer  <mitch@gimp.org>
+
+	* HACKING: s/gfm/gimp-plugin-template/
+
+2000-05-24  Michael Natterer  <mitch@gimp.org>
+
+	* src/interface.c: one more comment.
+
+	* src/main.[ch]: renamed variables, #define'd some string constants.
+
+2000-05-24  Michael Natterer  <mitch@gimp.org>
+
+	* src/interface.[ch]
+	* src/render.[ch]: added some comments.
+
+2000-05-24  Michael Natterer  <mitch@gimp.org>
+
+	* initial revision.

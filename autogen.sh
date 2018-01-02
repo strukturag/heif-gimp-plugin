@@ -1,4 +1,4 @@
-2#!/bin/sh
+#!/bin/sh
 
 # This script does all the magic calls to automake/autoconf and
 # friends that are needed to configure a cvs checkout.  You need a
@@ -24,6 +24,9 @@ cd $srcdir
 
 check_version ()
 {
+#    This does not work either, because we might have numbers like 1.2.3 ...
+#    if [ "$(echo "$1 > $2" | bc)" -eq 1 ]; then
+
     if expr $1 \>= $2 > /dev/null; then
 	echo "yes (version $1)"
     else
@@ -33,7 +36,7 @@ check_version ()
 }
 
 echo
-echo "I am testing that you have the required versions of autoconf," 
+echo "I am testing that you have the required versions of autoconf,"
 echo "automake, glib-gettextize and intltoolize..."
 echo
 
@@ -62,6 +65,9 @@ elif (automake-1.8 --version) < /dev/null > /dev/null 2>&1; then
 elif (automake-1.9 --version) < /dev/null > /dev/null 2>&1; then
    AUTOMAKE=automake-1.9
    ACLOCAL=aclocal-1.9
+elif (automake-1.15 --version) < /dev/null > /dev/null 2>&1; then
+   AUTOMAKE=automake-1.15
+   ACLOCAL=aclocal-1.15
 elif (automake-1.6 --version) < /dev/null > /dev/null 2>&1; then
    AUTOMAKE=automake-1.6
    ACLOCAL=aclocal-1.6
@@ -76,7 +82,7 @@ fi
 if test x$AUTOMAKE != x; then
     VER=`$AUTOMAKE --version \
          | grep automake | sed "s/.* \([0-9.]*\)[-a-z0-9]*$/\1/"`
-    check_version $VER $AUTOMAKE_REQUIRED_VERSION
+    #check_version $VER $AUTOMAKE_REQUIRED_VERSION
 fi
 
 echo -n "checking for glib-gettextize >= $GLIB_REQUIRED_VERSION ... "
@@ -108,7 +114,7 @@ fi
 if test "$DIE" -eq 1; then
     echo
     echo "Please install/upgrade the missing tools and call me again."
-    echo	
+    echo
     exit 1
 fi
 

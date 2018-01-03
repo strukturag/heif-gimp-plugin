@@ -80,7 +80,7 @@ image_ID,
 
   gimp_ui_init (PLUGIN_NAME, TRUE);
 
-  dlg = gimp_dialog_new (_("Select image"), PLUGIN_NAME,
+  dlg = gimp_dialog_new (_("Load HEIF image content"), PLUGIN_NAME,
                          NULL, 0,
 			 gimp_standard_help_func, "plug-in-template", // TODO
 
@@ -95,7 +95,7 @@ image_ID,
 
   /*  gimp_scale_entry_new() examples  */
 
-  frame = gimp_frame_new (_("ScaleEntry Examples"));
+  frame = gimp_frame_new (_("Select image"));
   gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
   gtk_widget_show (frame);
 

@@ -159,7 +159,7 @@ gint32 load_heif(const gchar *name, GError **error)
   for (i=0; i<num; i++) {
     struct heif_image_handle* h;
     heif_context_get_image_handle(ctx, i, &h);
-    if (heif_context_is_primary_image(ctx, h)) {
+    if (heif_image_handle_is_primary_image(ctx, h)) {
       primary = i;
     }
     heif_image_handle_release(h);

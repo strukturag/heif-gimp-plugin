@@ -174,7 +174,7 @@ gint32 load_heif(const gchar *name, GError **error)
   result.selected_image = primary;
 
   if (num > 1) {
-    dialog(num,primary,&result);
+    dialog(num,primary,&result, ctx);
 
     printf("selected idx: %d\n", result.selected_image);
   }
@@ -182,6 +182,8 @@ gint32 load_heif(const gchar *name, GError **error)
   struct heif_image_handle* handle = 0;
   //heif_context_get_primary_image_handle(ctx, &handle);
   heif_context_get_image_handle(ctx, result.selected_image, &handle);
+
+  //heif_image_handle_get_thumbnail(ctx,handle, 0, &handle);
 
   struct heif_image* img = 0;
   struct heif_error err = heif_decode_image(ctx, handle, &img,

@@ -21,11 +21,15 @@
 #define __INTERFACE_H__
 
 
+#include "libheif/heif.h"
+
+
 /*  Public functions  */
 
 gboolean   dialog (int num_images,
                    int primary_image,
-                   UIResult* ui_vals);
+                   UIResult* ui_vals,
+                   struct heif_context* heif);
 /*
 		   GimpDrawable       *drawable,
 		   PlugInVals         *vals,

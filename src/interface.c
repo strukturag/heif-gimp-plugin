@@ -51,7 +51,8 @@ static PlugInUIVals *ui_state = NULL;
 gboolean
 dialog (int num_images,
         int primary_image,
-        UIResult* ui_result)
+        UIResult* ui_result,
+        struct heif_context* heif)
 
 /*
 image_ID,
@@ -75,6 +76,8 @@ image_ID,
   gboolean   run = FALSE;
   GimpUnit   unit;
   gdouble    xres, yres;
+
+  struct heif_error err;
 
   //ui_state = ui_vals;
 
@@ -115,6 +118,75 @@ image_ID,
 
   gtk_container_add (GTK_CONTAINER (frame), combobox);
   gtk_widget_show(combobox);
+
+
+
+  frame = gimp_frame_new (_("Select image (2)"));
+  gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
+  gtk_widget_show (frame);
+
+  GtkListStore* liststore;
+  GtkTreeIter   iter;
+
+  liststore = gtk_list_store_new(2, G_TYPE_STRING, GDK_TYPE_PIXBUF);
+  int numImages = heif_context_get_number_of_images(heif);
+  for (i=0; i<numImages; i++) {
+
+    struct heif_image_handle* handle;
+    err = heif_context_get_image_handle(heif, i, &handle);
+
+    char buf[100];
+    int width,height;
+    heif_image_handle_get_resolution(heif,handle,&width,&height);
+    sprintf(buf,"%dx%d", width,height);
+
+    gtk_list_store_append(liststore, &iter);
+    gtk_list_store_set(liststore, &iter, 0, buf, -1);
+
+    if (heif_image_handle_get_number_of_thumbnails(heif, handle)) {
+      struct heif_image_handle* thumbnail_handle;
+      heif_image_handle_get_thumbnail(heif, handle, 0, &thumbnail_handle);
+
+      struct heif_pixel_image* thumbnail_img;
+      err = heif_decode_image(heif, thumbnail_handle, &thumbnail_img,
+                              heif_colorspace_RGB, heif_chroma_interleaved_24bit);
+
+
+      int stride;
+      const uint8_t* data = heif_image_get_plane_readonly(thumbnail_img,
+                                                          heif_channel_interleaved,
+                                                          &stride);
+
+      int thumbnail_width,thumbnail_height;
+      heif_image_handle_get_resolution(heif,thumbnail_handle,
+                                       &thumbnail_width,&thumbnail_height);
+
+      GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (data,
+                                                    GDK_COLORSPACE_RGB,
+                                                    FALSE,
+                                                    8,
+                                                    thumbnail_width,
+                                                    thumbnail_height,
+                                                    stride,
+                                                    NULL,
+                                                    NULL);
+
+      gtk_list_store_set(liststore, &iter, 1, pixbuf, -1);
+
+      // heif_image_release(thumbnail_img);  // TODO: free image, but keep image data for pixbuf...
+      //heif_image_handle_release(thumbnail_handle);
+    }
+
+    //heif_image_handle_release(handle);
+  }
+
+  GtkWidget* iconview = gtk_icon_view_new();
+  gtk_icon_view_set_model(iconview, liststore);
+  gtk_icon_view_set_text_column(iconview, 0);
+  gtk_icon_view_set_pixbuf_column(iconview, 1);
+  gtk_container_add (GTK_CONTAINER (frame), iconview);
+  gtk_widget_show(iconview);
+
 
 #if 0
   table = gtk_table_new (3, 3, FALSE);
@@ -244,8 +316,16 @@ image_ID,
         gimp_chain_button_get_active (GIMP_COORDINATES_CHAINBUTTON (coordinates));
       */
 
-      ui_result->selected_image = gtk_combo_box_get_active(combobox);
+      //ui_result->selected_image = gtk_combo_box_get_active(combobox);
     }
+
+  GList* selected_items = gtk_icon_view_get_selected_items(iconview);
+
+  GtkTreePath* path = (GtkTreePath*)(selected_items->data);
+  gint* indices = gtk_tree_path_get_indices(path);
+  ui_result->selected_image = indices[0];
+
+  g_list_free_full(selected_items, (GDestroyNotify) gtk_tree_path_free);
 
   gtk_widget_destroy (dlg);
 

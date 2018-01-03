@@ -162,6 +162,11 @@ gint32 load_heif(const gchar *name, GError **error)
     if (heif_image_handle_is_primary_image(ctx, h)) {
       primary = i;
     }
+
+    int ww,hh;
+    heif_image_handle_get_resolution(ctx, h, &ww,&hh);
+    printf("resolution %d x %d\n",ww,hh);
+
     heif_image_handle_release(h);
   }
 
@@ -178,20 +183,10 @@ gint32 load_heif(const gchar *name, GError **error)
   //heif_context_get_primary_image_handle(ctx, &handle);
   heif_context_get_image_handle(ctx, result.selected_image, &handle);
 
-  //drawable,
-  //        &vals, &image_vals, &drawable_vals, &ui_vals);
-
   struct heif_image* img = 0;
-  struct heif_error err = heif_decode_image(ctx, handle, &img);
-
-  int strideY;
-  const uint8_t* dataY = heif_image_get_plane_readonly(img, heif_channel_Y, &strideY);
-
-  int strideCb;
-  const uint8_t* dataCb = heif_image_get_plane_readonly(img, heif_channel_Cb, &strideCb);
-
-  int strideCr;
-  const uint8_t* dataCr = heif_image_get_plane_readonly(img, heif_channel_Cr, &strideCr);
+  struct heif_error err = heif_decode_image(ctx, handle, &img,
+                                            heif_colorspace_RGB,
+                                            heif_chroma_interleaved_24bit);
 
   int width = heif_image_get_width(img, heif_channel_Y);
   int height = heif_image_get_height(img, heif_channel_Y);
@@ -224,23 +219,13 @@ gint32 load_heif(const gchar *name, GError **error)
                        width,height,
                        TRUE, TRUE);
 
-  guchar* buf = alloca(width*3);
+  int stride;
+  const uint8_t* data = heif_image_get_plane_readonly(img, heif_channel_interleaved, &stride);
 
   int x,y;
   for (y=0;y<height;y++) {
-    for (x=0;x<width;x++) {
-      int yv = dataY[y*strideY + x] - 16;
-      int uv = dataCb[y/2*strideCb + x/2] - 128;
-      int vv = dataCr[y/2*strideCr + x/2] - 128;
-
-      float y_val = 1.164 * yv;
-      buf[3*x + 0] = clip(y_val + 1.596 * vv);
-      buf[3*x + 1] = clip(y_val - 0.813 * vv - 0.391 * uv);
-      buf[3*x + 2] = clip(y_val + 2.018 * uv);
-    }
-
     gimp_pixel_rgn_set_row(&rgn_out,
-                           buf,
+                           data+y*stride,
                            0,y,width);
   }
 

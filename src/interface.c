@@ -334,12 +334,13 @@ image_ID,
     }
 
   GList* selected_items = gtk_icon_view_get_selected_items((GtkIconView*) iconview);
+  if (selected_items) {
+    GtkTreePath* path = (GtkTreePath*)(selected_items->data);
+    gint* indices = gtk_tree_path_get_indices(path);
+    ui_result->selected_image = indices[0];
 
-  GtkTreePath* path = (GtkTreePath*)(selected_items->data);
-  gint* indices = gtk_tree_path_get_indices(path);
-  ui_result->selected_image = indices[0];
-
-  g_list_free_full(selected_items, (GDestroyNotify) gtk_tree_path_free);
+    g_list_free_full(selected_items, (GDestroyNotify) gtk_tree_path_free);
+  }
 
   gtk_widget_destroy (dlg);
 

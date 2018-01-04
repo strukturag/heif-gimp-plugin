@@ -171,7 +171,9 @@ gint32 load_heif(const gchar *name,
   result.selected_image = primary;
 
   if (interactive && num > 1) {
-    dialog(num,primary,&result, ctx);
+    if (!dialog(num,primary,&result, ctx)) {
+      return -2;
+    }
 
     printf("selected idx: %d\n", result.selected_image);
   }
@@ -310,11 +312,16 @@ run (const gchar      *name,
                                 run_mode == GIMP_RUN_INTERACTIVE,
                                 &error);
 
-          if (image_ID != -1)
+          if (image_ID >= 0)
             {
               *nreturn_vals = 2;
               values[1].type         = GIMP_PDB_IMAGE;
               values[1].data.d_image = image_ID;
+            }
+          else if (image_ID == -2)
+            {
+              // No image was selected.
+              status = GIMP_PDB_CANCEL;
             }
           else
             {

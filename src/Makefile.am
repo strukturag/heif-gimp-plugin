@@ -15,12 +15,11 @@ AM_CPPFLAGS = \
 	-DLOCALEDIR=\""$(LOCALEDIR)"\"		\
 	-DDATADIR=\""$(DATADIR)"\"
 
-INCLUDES =\
-	-I$(top_srcdir)		\
-	@GIMP_CFLAGS@		\
-	-I$(includedir)
-
 # LDADD = $(GIMP_LIBS)
 
-gimp_plugin_template_CFLAGS = $(libheif_CFLAGS)
+gimp_plugin_template_CFLAGS = \
+	$(libheif_CFLAGS) \
+	-I$(top_srcdir) \
+	@GIMP_CFLAGS@ \
+	-I$(includedir)
 gimp_plugin_template_LDADD = $(libheif_LIBS) $(GIMP_LIBS)

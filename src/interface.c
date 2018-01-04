@@ -147,7 +147,7 @@ image_ID,
       struct heif_image_handle* thumbnail_handle;
       heif_image_handle_get_thumbnail(heif, handle, 0, &thumbnail_handle);
 
-      struct heif_pixel_image* thumbnail_img;
+      struct heif_image* thumbnail_img;
       err = heif_decode_image(heif, thumbnail_handle, &thumbnail_img,
                               heif_colorspace_RGB, heif_chroma_interleaved_24bit);
 

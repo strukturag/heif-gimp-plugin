@@ -1,0 +1,16 @@
+*.o
+
+.deps
+aclocal.m4
+autom4te.cache/
+compile
+config.*
+configure
+intltool-*.in
+Makefile
+Makefile.in
+Makefile.in.in
+po/POTFILES
+po/stamp-it
+src/gimp-plugin-template
+stamp-h1

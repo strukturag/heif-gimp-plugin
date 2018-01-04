@@ -1,4 +1,5 @@
 *.o
+*.gmo
 
 .deps
 aclocal.m4

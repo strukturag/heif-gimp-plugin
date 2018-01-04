@@ -1,10 +1,10 @@
 ## Process this file with automake to produce Makefile.in
 
-bin_PROGRAMS = gimp-plugin-template
+bin_PROGRAMS = heif-gimp-plugin
 
 bindir = $(GIMP_LIBDIR)/plug-ins
 
-gimp_plugin_template_SOURCES = \
+heif_gimp_plugin_SOURCES = \
 	plugin-intl.h	\
 	interface.c	\
 	interface.h	\
@@ -17,9 +17,10 @@ AM_CPPFLAGS = \
 
 # LDADD = $(GIMP_LIBS)
 
-gimp_plugin_template_CFLAGS = \
+heif_gimp_plugin_CFLAGS = \
 	$(libheif_CFLAGS) \
 	-I$(top_srcdir) \
 	@GIMP_CFLAGS@ \
 	-I$(includedir)
-gimp_plugin_template_LDADD = $(libheif_LIBS) $(GIMP_LIBS)
+
+heif_gimp_plugin_LDADD = $(libheif_LIBS) $(GIMP_LIBS)

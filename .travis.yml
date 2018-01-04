@@ -1,0 +1,28 @@
+# stats available at
+# https://travis-ci.org/strukturag/heif-gimp-plugin/
+language: cpp
+compiler:
+  - gcc
+  - clang
+cache: ccache
+sudo: required
+env:
+  - CHECK_LICENSES=1
+  - BUILD=1
+  - TARBALL=1
+
+matrix:
+  exclude:
+    - compiler: clang
+      env: CHECK_LICENSES=1
+    - compiler: clang
+      env: TARBALL=1
+
+before_install:
+  - ./scripts/install-ci.sh
+
+before_script:
+  - ./scripts/prepare-ci.sh
+
+script:
+  - ./scripts/run-ci.sh

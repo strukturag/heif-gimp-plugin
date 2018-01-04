@@ -139,7 +139,11 @@ query (void)
 }
 
 
-gint32 load_heif(const gchar *name, GError **error)
+
+
+gint32 load_heif(const gchar *name,
+                 int interactive,
+                 GError **error)
 {
   struct heif_context* ctx = heif_context_alloc();
   heif_context_read_from_file(ctx, name);
@@ -166,7 +170,7 @@ gint32 load_heif(const gchar *name, GError **error)
   UIResult result;
   result.selected_image = primary;
 
-  if (num > 1) {
+  if (interactive && num > 1) {
     dialog(num,primary,&result, ctx);
 
     printf("selected idx: %d\n", result.selected_image);
@@ -284,21 +288,27 @@ run (const gchar      *name,
       switch (run_mode)
         {
         case GIMP_RUN_INTERACTIVE:
+          printf("interactive\n");
           break;
 
         case GIMP_RUN_NONINTERACTIVE:
+          printf("non-interactive\n");
+
           /*  Make sure all the arguments are there!  */
           if (n_params != 3)
             status = GIMP_PDB_CALLING_ERROR;
           break;
 
         default:
+          printf("other\n");
           break;
         }
 
       if (status == GIMP_PDB_SUCCESS)
         {
-          image_ID = load_heif (param[1].data.d_string, &error);
+          image_ID = load_heif (param[1].data.d_string,
+                                run_mode == GIMP_RUN_INTERACTIVE,
+                                &error);
 
           if (image_ID != -1)
             {

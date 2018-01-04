@@ -83,6 +83,8 @@ image_ID,
   gdouble    xres, yres;
 #endif
 
+  int i;
+
   struct heif_error err;
 
   //ui_state = ui_vals;
@@ -104,6 +106,7 @@ image_ID,
 
   /*  gimp_scale_entry_new() examples  */
 
+#if 0
   frame = gimp_frame_new (_("Select image"));
   gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
   gtk_widget_show (frame);
@@ -124,10 +127,10 @@ image_ID,
 
   gtk_container_add (GTK_CONTAINER (frame), combobox);
   gtk_widget_show(combobox);
+#endif
 
 
-
-  frame = gimp_frame_new (_("Select image (2)"));
+  frame = gimp_frame_new (_("Select image"));
   gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
   gtk_widget_show (frame);
 
@@ -148,7 +151,8 @@ image_ID,
     char buf[100];
     int width,height;
     heif_image_handle_get_resolution(heif,handle,&width,&height);
-    sprintf(buf,"%dx%d", width,height);
+    sprintf(buf,"%dx%d%s", width,height,
+            heif_image_handle_is_primary_image(heif,handle) ? " (primary)":"");
 
     gtk_list_store_append(liststore, &iter);
     gtk_list_store_set(liststore, &iter, 0, buf, -1);

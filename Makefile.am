@@ -3,14 +3,12 @@
 SUBDIRS = po src help
 
 EXTRA_DIST = \
-	BUGS			\
-	HACKING			\
-	autogen.sh		\
-        intltool-extract.in	\
-        intltool-merge.in	\
-        intltool-update.in
+	autogen.sh \
+	intltool-extract.in \
+	intltool-merge.in \
+	intltool-update.in
 
 DISTCLEANFILES = \
-	intltool-extract	\
-	intltool-merge		\
+	intltool-extract \
+	intltool-merge \
 	intltool-update

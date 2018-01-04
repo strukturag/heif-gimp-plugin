@@ -6,10 +6,13 @@ autom4te.cache/
 compile
 config.*
 configure
+depcomp
 intltool-*.in
+install-sh
 Makefile
 Makefile.in
 Makefile.in.in
+missing
 po/POTFILES
 po/stamp-it
 src/gimp-plugin-template

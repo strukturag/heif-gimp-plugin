@@ -173,7 +173,7 @@ fi
 # optionally feature autoheader
 (autoheader --version)  < /dev/null > /dev/null 2>&1 && autoheader || exit 1
 
-$AUTOMAKE --add-missing || exit 1
+$AUTOMAKE --add-missing --copy || exit 1
 autoconf || exit 1
 
 glib-gettextize --copy --force || exit 1

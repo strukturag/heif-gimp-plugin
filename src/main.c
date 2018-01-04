@@ -139,13 +139,6 @@ query (void)
 }
 
 
-int clip(int x)
-{
-  if (x<0) return 0;
-  if (x>255) return 255;
-  return x;
-}
-
 gint32 load_heif(const gchar *name, GError **error)
 {
   struct heif_context* ctx = heif_context_alloc();
@@ -189,6 +182,9 @@ gint32 load_heif(const gchar *name, GError **error)
   struct heif_error err = heif_decode_image(ctx, handle, &img,
                                             heif_colorspace_RGB,
                                             heif_chroma_interleaved_24bit);
+  if (err.code) {
+    // TODO(farindk): Handle error.
+  }
 
   int width = heif_image_get_width(img, heif_channel_Y);
   int height = heif_image_get_height(img, heif_channel_Y);
@@ -210,6 +206,9 @@ gint32 load_heif(const gchar *name, GError **error)
                                              layer_ID,
                                              0, // gint32 parent_ID,
                                              0); // gint position);
+  if (!success) {
+    // TODO(farindk): Handle error.
+  }
 
 
   GimpDrawable *drawable = gimp_drawable_get(layer_ID);
@@ -224,7 +223,7 @@ gint32 load_heif(const gchar *name, GError **error)
   int stride;
   const uint8_t* data = heif_image_get_plane_readonly(img, heif_channel_interleaved, &stride);
 
-  int x,y;
+  int y;
   for (y=0;y<height;y++) {
     gimp_pixel_rgn_set_row(&rgn_out,
                            data+y*stride,
@@ -254,7 +253,7 @@ run (const gchar      *name,
      GimpParam       **return_vals)
 {
   static GimpParam   values[2];
-  GimpDrawable      *drawable;
+  //GimpDrawable      *drawable;
   gint32             image_ID;
   GimpRunMode        run_mode;
   GimpPDBStatusType  status = GIMP_PDB_SUCCESS;

@@ -37,13 +37,17 @@
 
 /*  Local function prototypes  */
 
+#if 0
 static gboolean   dialog_image_constraint_func (gint32    image_id,
                                                 gpointer  data);
+#endif
 
 
 /*  Local variables  */
 
+#if 0
 static PlugInUIVals *ui_state = NULL;
+#endif
 
 
 /*  Public functions  */
@@ -66,6 +70,8 @@ image_ID,
   GtkWidget *dlg;
   GtkWidget *main_vbox;
   GtkWidget *frame;
+  gboolean   run = FALSE;
+#if 0
   GtkWidget *table;
   GtkWidget *hbox;
   GtkWidget *hbox2;
@@ -73,9 +79,9 @@ image_ID,
   GtkWidget *combo;
   GtkObject *adj;
   gint       row;
-  gboolean   run = FALSE;
   GimpUnit   unit;
   gdouble    xres, yres;
+#endif
 
   struct heif_error err;
 
@@ -111,10 +117,10 @@ image_ID,
       gchar some_data[20];
       sprintf(some_data,"image %d%s",i+1,
               i == primary_image ? " (primary)" : "");
-      gtk_combo_box_text_append_text(combobox, some_data);
+      gtk_combo_box_text_append_text((GtkComboBoxText*) combobox, some_data);
     }
 
-  gtk_combo_box_set_active (combobox, primary_image);
+  gtk_combo_box_set_active ((GtkComboBox*) combobox, primary_image);
 
   gtk_container_add (GTK_CONTAINER (frame), combobox);
   gtk_widget_show(combobox);
@@ -134,6 +140,10 @@ image_ID,
 
     struct heif_image_handle* handle;
     err = heif_context_get_image_handle(heif, i, &handle);
+    if (err.code) {
+      // TODO(farindk): Handle error.
+      continue;
+    }
 
     char buf[100];
     int width,height;
@@ -181,9 +191,9 @@ image_ID,
   }
 
   GtkWidget* iconview = gtk_icon_view_new();
-  gtk_icon_view_set_model(iconview, liststore);
-  gtk_icon_view_set_text_column(iconview, 0);
-  gtk_icon_view_set_pixbuf_column(iconview, 1);
+  gtk_icon_view_set_model((GtkIconView*) iconview, (GtkTreeModel*) liststore);
+  gtk_icon_view_set_text_column((GtkIconView*) iconview, 0);
+  gtk_icon_view_set_pixbuf_column((GtkIconView*) iconview, 1);
   gtk_container_add (GTK_CONTAINER (frame), iconview);
   gtk_widget_show(iconview);
 
@@ -319,7 +329,7 @@ image_ID,
       //ui_result->selected_image = gtk_combo_box_get_active(combobox);
     }
 
-  GList* selected_items = gtk_icon_view_get_selected_items(iconview);
+  GList* selected_items = gtk_icon_view_get_selected_items((GtkIconView*) iconview);
 
   GtkTreePath* path = (GtkTreePath*)(selected_items->data);
   gint* indices = gtk_tree_path_get_indices(path);
@@ -335,9 +345,11 @@ image_ID,
 
 /*  Private functions  */
 
+#if 0
 static gboolean
 dialog_image_constraint_func (gint32    image_id,
                               gpointer  data)
 {
   return (gimp_image_base_type (image_id) == GIMP_RGB);
 }
+#endif

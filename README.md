@@ -33,7 +33,7 @@ first, then [libheif](https://github.com/strukturag/libheif), so that the config
 Preferably, download the `frame-parallel` branch of libde265, as this uses a
 more recent API than the version in the `master` branch.
 
-After compilation, copy the file 'src/heif-gimp-plugin' into your GIMP plugin directory
+After compilation, copy the file `src/heif-gimp-plugin` into your GIMP plugin directory
 (for example, `$HOME/.gimp-2.8/plug-ins`).
 When starting GIMP, the HEIF file-format should now show in the list of supported formats when you open a file.
 
@@ -44,4 +44,4 @@ The heif-gimp-plugin is distributed under the terms of the GNU General Public Li
 
 See COPYING for more details.
 
-Copyright (c) 2018 Struktur AG Contact: Dirk Farin farin@struktur.de
+Copyright (c) 2018 Struktur AG / Contact: Dirk Farin farin@struktur.de

@@ -194,8 +194,8 @@ gint32 load_heif(const gchar *name,
     // TODO(farindk): Handle error.
   }
 
-  int width = heif_image_get_width(img, heif_channel_Y);
-  int height = heif_image_get_height(img, heif_channel_Y);
+  int width = heif_image_get_width(img, heif_channel_interleaved);
+  int height = heif_image_get_height(img, heif_channel_interleaved);
 
 
   // --- create GIMP image and copy HEIF image into the GIMP image (converting it to RGB)

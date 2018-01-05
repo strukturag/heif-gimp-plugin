@@ -186,9 +186,10 @@ gint32 load_heif(const gchar *name,
   //heif_image_handle_get_thumbnail(ctx,handle, 0, &handle);
 
   struct heif_image* img = 0;
-  struct heif_error err = heif_decode_image(handle, &img,
+  struct heif_error err = heif_decode_image(handle,
                                             heif_colorspace_RGB,
-                                            heif_chroma_interleaved_24bit);
+                                            heif_chroma_interleaved_24bit,
+                                            &img);
   if (err.code) {
     // TODO(farindk): Handle error.
   }

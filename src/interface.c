@@ -163,9 +163,9 @@ image_ID,
       heif_image_handle_get_thumbnail(handle, 0, &thumbnail_handle);
 
       struct heif_image* thumbnail_img;
-      err = heif_decode_image(thumbnail_handle, &thumbnail_img,
-                              heif_colorspace_RGB, heif_chroma_interleaved_24bit);
-
+      err = heif_decode_image(thumbnail_handle,
+                              heif_colorspace_RGB, heif_chroma_interleaved_24bit,
+                              &thumbnail_img);
 
       int stride;
       const uint8_t* data = heif_image_get_plane_readonly(thumbnail_img,

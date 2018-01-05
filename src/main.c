@@ -157,12 +157,12 @@ gint32 load_heif(const gchar *name,
   for (i=0; i<num; i++) {
     struct heif_image_handle* h;
     heif_context_get_image_handle(ctx, i, &h);
-    if (heif_image_handle_is_primary_image(ctx, h)) {
+    if (heif_image_handle_is_primary_image(h)) {
       primary = i;
     }
 
     int ww,hh;
-    heif_image_handle_get_resolution(ctx, h, &ww,&hh);
+    heif_image_handle_get_resolution(h, &ww,&hh);
     printf("resolution %d x %d\n",ww,hh);
 
     heif_image_handle_release(h);
@@ -186,7 +186,7 @@ gint32 load_heif(const gchar *name,
   //heif_image_handle_get_thumbnail(ctx,handle, 0, &handle);
 
   struct heif_image* img = 0;
-  struct heif_error err = heif_decode_image(ctx, handle, &img,
+  struct heif_error err = heif_decode_image(handle, &img,
                                             heif_colorspace_RGB,
                                             heif_chroma_interleaved_24bit);
   if (err.code) {

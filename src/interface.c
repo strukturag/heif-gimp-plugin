@@ -151,19 +151,19 @@ image_ID,
 
     char buf[100];
     int width,height;
-    heif_image_handle_get_resolution(heif,handle,&width,&height);
+    heif_image_handle_get_resolution(handle,&width,&height);
     sprintf(buf,"%dx%d%s", width,height,
-            heif_image_handle_is_primary_image(heif,handle) ? " (primary)":"");
+            heif_image_handle_is_primary_image(handle) ? " (primary)":"");
 
     gtk_list_store_append(liststore, &iter);
     gtk_list_store_set(liststore, &iter, 0, buf, -1);
 
-    if (heif_image_handle_get_number_of_thumbnails(heif, handle)) {
+    if (heif_image_handle_get_number_of_thumbnails(handle)) {
       struct heif_image_handle* thumbnail_handle;
-      heif_image_handle_get_thumbnail(heif, handle, 0, &thumbnail_handle);
+      heif_image_handle_get_thumbnail(handle, 0, &thumbnail_handle);
 
       struct heif_image* thumbnail_img;
-      err = heif_decode_image(heif, thumbnail_handle, &thumbnail_img,
+      err = heif_decode_image(thumbnail_handle, &thumbnail_img,
                               heif_colorspace_RGB, heif_chroma_interleaved_24bit);
 
 
@@ -173,7 +173,7 @@ image_ID,
                                                           &stride);
 
       int thumbnail_width,thumbnail_height;
-      heif_image_handle_get_resolution(heif,thumbnail_handle,
+      heif_image_handle_get_resolution(thumbnail_handle,
                                        &thumbnail_width,&thumbnail_height);
 
       GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (data,

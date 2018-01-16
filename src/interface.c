@@ -55,8 +55,7 @@ static PlugInUIVals *ui_state = NULL;
 
 gboolean
 dialog (int num_images,
-        int primary_image,
-        UIResult* ui_result,
+        uint32_t* selected_image,
         struct heif_context* heif)
 
 /*
@@ -139,7 +138,10 @@ image_ID,
   GtkTreeIter   iter;
 
   liststore = gtk_list_store_new(2, G_TYPE_STRING, GDK_TYPE_PIXBUF);
-  int numImages = heif_context_get_number_of_images(heif);
+  int numImages = heif_context_get_number_of_top_level_images(heif);
+  uint32_t* IDs = (uint32_t*)alloca(numImages * sizeof(uint32_t));
+  heif_context_get_list_of_top_level_image_IDs(heif, IDs, numImages);
+
   for (i=0; i<numImages; i++) {
 
     struct heif_image_handle* handle;
@@ -192,7 +194,7 @@ image_ID,
       //heif_image_handle_release(thumbnail_handle);
     }
 
-    //heif_image_handle_release(handle);
+    heif_image_handle_release(handle);
   }
 
   GtkWidget* iconview = gtk_icon_view_new();
@@ -338,7 +340,8 @@ image_ID,
   if (selected_items) {
     GtkTreePath* path = (GtkTreePath*)(selected_items->data);
     gint* indices = gtk_tree_path_get_indices(path);
-    ui_result->selected_image = indices[0];
+
+    *selected_image = IDs[indices[0]];
 
     g_list_free_full(selected_items, (GDestroyNotify) gtk_tree_path_free);
   }

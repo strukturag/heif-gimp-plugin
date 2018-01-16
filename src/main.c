@@ -21,6 +21,7 @@
 #include "config.h"
 
 #include <string.h>
+#include <assert.h>
 
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
@@ -37,10 +38,6 @@
 
 #define LOAD_PROC   "load_heif_file"
 
-#define DATA_KEY_VALS    "plug_in_template"
-#define DATA_KEY_UI_VALS "plug_in_template_ui"
-
-
 /*  Local function prototypes  */
 
 static void   query (void);
@@ -51,38 +48,6 @@ static void   run   (const gchar      *name,
 		     GimpParam       **return_vals);
 
 
-/*  Local variables  */
-
-const PlugInVals default_vals =
-{
-  0,
-  1,
-  2,
-  0,
-  FALSE
-};
-
-const PlugInImageVals default_image_vals =
-{
-  0
-};
-
-const PlugInDrawableVals default_drawable_vals =
-{
-  0
-};
-
-const PlugInUIVals default_ui_vals =
-{
-  TRUE
-};
-
-static PlugInVals         vals;
-static PlugInImageVals    image_vals;
-static PlugInDrawableVals drawable_vals;
-static PlugInUIVals       ui_vals;
-
-
 GimpPlugInInfo PLUG_IN_INFO =
 {
   NULL,  /* init_proc  */
@@ -91,14 +56,13 @@ GimpPlugInInfo PLUG_IN_INFO =
   run,   /* run_proc   */
 };
 
+
 MAIN ()
+
 
 static void
 query (void)
 {
-  gchar *help_path;
-  gchar *help_uri;
-
   static const GimpParamDef load_args[] =
     {
       { GIMP_PDB_INT32,  "run-mode",     "The run mode { RUN-NONINTERACTIVE (1) }" },
@@ -113,12 +77,17 @@ query (void)
 
   gimp_plugin_domain_register (PLUGIN_NAME, LOCALEDIR);
 
+  /*
+  gchar *help_path;
+  gchar *help_uri;
+
   help_path = g_build_filename (DATADIR, "help", NULL);
   help_uri = g_filename_to_uri (help_path, NULL, NULL);
   g_free (help_path);
 
   gimp_plugin_help_register ("http://developer.gimp.org/plug-in-template/help",
                              help_uri);
+  */
 
   gimp_install_procedure (LOAD_PROC,
 			  _("Load HEIF images."),
@@ -135,66 +104,109 @@ query (void)
                           load_return_vals);
 
   gimp_register_load_handler(LOAD_PROC, "heic,heif", ""); // TODO: 'avci'
-
-  //  gimp_plugin_menu_register (PROCEDURE_NAME, "<Image>/Filters/Misc/");
 }
 
 
 
+#define LOAD_HEIF_ERROR -1
+#define LOAD_HEIF_CANCEL -2
 
-gint32 load_heif(const gchar *name,
-                 int interactive,
-                 GError **error)
+gint32 load_heif(const gchar *filename, int interactive)
 {
+  struct heif_error err;
+
   struct heif_context* ctx = heif_context_alloc();
-  heif_context_read_from_file(ctx, name);
-
-  int num = heif_context_get_number_of_images(ctx);
-
-  int primary = 0; // if there is no primary image (invalid file), just take the first image
-  int i;
-  for (i=0; i<num; i++) {
-    struct heif_image_handle* h;
-    heif_context_get_image_handle(ctx, i, &h);
-    if (heif_image_handle_is_primary_image(h)) {
-      primary = i;
-    }
-
-    heif_image_handle_release(h);
+  err = heif_context_read_from_file(ctx, filename);
+  if (err.code) {
+    gimp_message(err.message);
+    heif_context_free(ctx);
+    return LOAD_HEIF_ERROR;
   }
 
-  UIResult result;
-  result.selected_image = primary;
+
+  // analyze image content
+  // Is there more than one image? Which image is the primary image?
+
+  int num = heif_context_get_number_of_top_level_images(ctx);
+  if (num==0) {
+    gimp_message(_("Input file contains no readable images"));
+    heif_context_free(ctx);
+    return LOAD_HEIF_ERROR;
+  }
+
+
+  // get the primary image
+
+  uint32_t primary;
+
+  err = heif_context_get_primary_image_ID(ctx, &primary);
+  if (err.code) {
+    gimp_message(err.message);
+    heif_context_free(ctx);
+    return LOAD_HEIF_ERROR;
+  }
+
+
+  // if primary image is no top level image or not present (invalid file), just take the first image
+
+  if (!heif_context_is_top_level_image_ID(ctx, primary)) {
+    int n = heif_context_get_list_of_top_level_image_IDs(ctx, &primary, 1);
+    assert(n==1);
+  }
+
+
+  printf("primary image idx: %d\n",primary);
+
+  uint32_t selected_image = primary;
+
+
+  // if there are several images in the file and we are running interactive,
+  // let the user choose a picture
 
   if (interactive && num > 1) {
-    if (!dialog(num,primary,&result, ctx)) {
-      return -2;
+    if (!dialog(num,&selected_image, ctx)) {
+      heif_context_free(ctx);
+      return LOAD_HEIF_CANCEL;
     }
   }
 
+
+
+  // load the picture
+
   struct heif_image_handle* handle = 0;
-  heif_context_get_image_handle(ctx, result.selected_image, &handle);
+  err = heif_context_get_image_handle_for_ID(ctx, selected_image, &handle);
+  if (err.code) {
+    gimp_message(err.message);
+    heif_context_free(ctx);
+    return LOAD_HEIF_ERROR;
+  }
 
   int has_alpha = heif_image_handle_has_alpha_channel(handle);
 
   struct heif_image* img = 0;
-  struct heif_error err = heif_decode_image(handle,
-                                            heif_colorspace_RGB,
-                                            has_alpha ? heif_chroma_interleaved_32bit :
-                                            heif_chroma_interleaved_24bit,
-                                            &img);
+  err = heif_decode_image(handle,
+                          heif_colorspace_RGB,
+                          has_alpha ? heif_chroma_interleaved_32bit :
+                          heif_chroma_interleaved_24bit,
+                          &img);
+
+  heif_image_handle_release(handle);
+  heif_context_free(ctx);
+
   if (err.code) {
-    // TODO(farindk): Handle error.
-    printf("ERR: %s\n",err.message);
+    gimp_message(err.message);
+    return LOAD_HEIF_ERROR;
   }
 
   int width = heif_image_get_width(img, heif_channel_interleaved);
   int height = heif_image_get_height(img, heif_channel_interleaved);
 
+
   // --- create GIMP image and copy HEIF image into the GIMP image (converting it to RGB)
 
   gint32 image_ID = gimp_image_new(width, height, GIMP_RGB);
-  gimp_image_set_filename(image_ID, name);
+  gimp_image_set_filename(image_ID, filename);
 
   gint32 layer_ID = gimp_layer_new(image_ID,
                                    "image content",
@@ -208,7 +220,10 @@ gint32 load_heif(const gchar *name,
                                              0, // gint32 parent_ID,
                                              0); // gint position);
   if (!success) {
-    // TODO(farindk): Handle error.
+    heif_image_release(img);
+    gimp_image_delete(image_ID);
+    // TODO: do we have to delete the layer?
+    return LOAD_HEIF_ERROR;
   }
 
 
@@ -239,8 +254,6 @@ gint32 load_heif(const gchar *name,
   gimp_drawable_detach(drawable);
 
   heif_image_release(img);
-  heif_image_handle_release(handle);
-  heif_context_free(ctx);
 
   return image_ID;
 }
@@ -258,7 +271,7 @@ run (const gchar      *name,
   gint32             image_ID;
   GimpRunMode        run_mode;
   GimpPDBStatusType  status = GIMP_PDB_SUCCESS;
-  GError            *error  = NULL;
+  //GError            *error  = NULL;
 
   *nreturn_vals = 1;
   *return_vals  = values;
@@ -273,12 +286,6 @@ run (const gchar      *name,
   run_mode = param[0].data.d_int32;
   //image_ID = param[1].data.d_int32;
   //drawable = gimp_drawable_get (param[2].data.d_drawable);
-
-  /*  Initialize with default values  */
-  vals          = default_vals;
-  image_vals    = default_image_vals;
-  drawable_vals = default_drawable_vals;
-  ui_vals       = default_ui_vals;
 
   if (strcmp (name, LOAD_PROC) == 0)
     {
@@ -304,8 +311,7 @@ run (const gchar      *name,
       if (status == GIMP_PDB_SUCCESS)
         {
           image_ID = load_heif (param[1].data.d_string,
-                                run_mode == GIMP_RUN_INTERACTIVE,
-                                &error);
+                                run_mode == GIMP_RUN_INTERACTIVE);
 
           if (image_ID >= 0)
             {
@@ -313,7 +319,7 @@ run (const gchar      *name,
               values[1].type         = GIMP_PDB_IMAGE;
               values[1].data.d_image = image_ID;
             }
-          else if (image_ID == -2)
+          else if (image_ID == LOAD_HEIF_CANCEL)
             {
               // No image was selected.
               status = GIMP_PDB_CANCEL;

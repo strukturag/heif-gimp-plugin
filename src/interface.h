@@ -28,15 +28,7 @@
 /*  Public functions  */
 
 gboolean   dialog (int num_images,
-                   int primary_image,
-                   UIResult* ui_vals,
+                   uint32_t* selected_image,
                    struct heif_context* heif);
-/*
-		   GimpDrawable       *drawable,
-		   PlugInVals         *vals,
-		   PlugInImageVals    *image_vals,
-		   PlugInDrawableVals *drawable_vals,
-		   PlugInUIVals       *ui_vals);
-*/
 
 #endif /* __INTERFACE_H__ */

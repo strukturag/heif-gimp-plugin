@@ -40,12 +40,13 @@
 
 /*  Local function prototypes  */
 
-static void   query (void);
-static void   run   (const gchar      *name,
-		     gint              nparams,
-		     const GimpParam  *param,
-		     gint             *nreturn_vals,
-		     GimpParam       **return_vals);
+static void   query(void);
+
+static void   run(const gchar      *name,
+                  gint              nparams,
+                  const GimpParam  *param,
+                  gint             *nreturn_vals,
+                  GimpParam       **return_vals);
 
 
 GimpPlugInInfo PLUG_IN_INFO =
@@ -155,8 +156,6 @@ gint32 load_heif(const gchar *filename, int interactive)
   }
 
 
-  printf("primary image idx: %d\n",primary);
-
   uint32_t selected_image = primary;
 
 
@@ -209,7 +208,7 @@ gint32 load_heif(const gchar *filename, int interactive)
   gimp_image_set_filename(image_ID, filename);
 
   gint32 layer_ID = gimp_layer_new(image_ID,
-                                   "image content",
+                                   _("image content"),
                                    width,height,
                                    has_alpha ? GIMP_RGBA_IMAGE : GIMP_RGB_IMAGE,
                                    100.0,
@@ -267,14 +266,10 @@ run (const gchar      *name,
      GimpParam       **return_vals)
 {
   static GimpParam   values[2];
-  //GimpDrawable      *drawable;
-  gint32             image_ID;
-  GimpRunMode        run_mode;
   GimpPDBStatusType  status = GIMP_PDB_SUCCESS;
-  //GError            *error  = NULL;
 
-  *nreturn_vals = 1;
   *return_vals  = values;
+  *nreturn_vals = 1; // by default only return success code (first parameter)
 
   /*  Initialize i18n support  */
   bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
@@ -283,123 +278,37 @@ run (const gchar      *name,
 #endif
   textdomain (GETTEXT_PACKAGE);
 
-  run_mode = param[0].data.d_int32;
-  //image_ID = param[1].data.d_int32;
-  //drawable = gimp_drawable_get (param[2].data.d_drawable);
+  if (strcmp (name, LOAD_PROC) == 0) {
+    GimpRunMode run_mode = param[0].data.d_int32;
 
-  if (strcmp (name, LOAD_PROC) == 0)
-    {
-      switch (run_mode)
-        {
-        case GIMP_RUN_INTERACTIVE:
-          printf("interactive\n");
-          break;
 
-        case GIMP_RUN_NONINTERACTIVE:
-          printf("non-interactive\n");
-
-          /*  Make sure all the arguments are there!  */
-          if (n_params != 3)
-            status = GIMP_PDB_CALLING_ERROR;
-          break;
-
-        default:
-          printf("other\n");
-          break;
-        }
-
-      if (status == GIMP_PDB_SUCCESS)
-        {
-          image_ID = load_heif (param[1].data.d_string,
-                                run_mode == GIMP_RUN_INTERACTIVE);
-
-          if (image_ID >= 0)
-            {
-              *nreturn_vals = 2;
-              values[1].type         = GIMP_PDB_IMAGE;
-              values[1].data.d_image = image_ID;
-            }
-          else if (image_ID == LOAD_HEIF_CANCEL)
-            {
-              // No image was selected.
-              status = GIMP_PDB_CANCEL;
-            }
-          else
-            {
-              status = GIMP_PDB_EXECUTION_ERROR;
-            }
-        }
-    }
-#if 0
-  if (strcmp (name, PROCEDURE_NAME) == 0)
-    {
-      switch (run_mode)
-	{
-	case GIMP_RUN_NONINTERACTIVE:
-	  if (n_params != 8)
-	    {
-	      status = GIMP_PDB_CALLING_ERROR;
-	    }
-	  else
-	    {
-	      vals.dummy1      = param[3].data.d_int32;
-	      vals.dummy2      = param[4].data.d_int32;
-	      vals.dummy3      = param[5].data.d_int32;
-	      vals.seed        = param[6].data.d_int32;
-	      vals.random_seed = param[7].data.d_int32;
-
-              if (vals.random_seed)
-                vals.seed = g_random_int ();
-	    }
-	  break;
-
-	case GIMP_RUN_INTERACTIVE:
-	  /*  Possibly retrieve data  */
-	  gimp_get_data (DATA_KEY_VALS,    &vals);
-	  gimp_get_data (DATA_KEY_UI_VALS, &ui_vals);
-
-	  if (! dialog (image_ID, drawable,
-			&vals, &image_vals, &drawable_vals, &ui_vals))
-	    {
-	      status = GIMP_PDB_CANCEL;
-	    }
-	  break;
-
-	case GIMP_RUN_WITH_LAST_VALS:
-	  /*  Possibly retrieve data  */
-	  gimp_get_data (DATA_KEY_VALS, &vals);
-
-          if (vals.random_seed)
-            vals.seed = g_random_int ();
-	  break;
-
-	default:
-	  break;
-	}
-    }
-#endif
-  else
-    {
+    // Make sure all the arguments are there
+    if (n_params != 3)
       status = GIMP_PDB_CALLING_ERROR;
+
+    const char* filename = param[1].data.d_string;
+    int is_interactive = (run_mode == GIMP_RUN_INTERACTIVE);
+
+    if (status == GIMP_PDB_SUCCESS) {
+      gint32 gimp_image_ID = load_heif(filename, is_interactive);
+
+      if (gimp_image_ID >= 0) {
+        *nreturn_vals = 2;
+        values[1].type         = GIMP_PDB_IMAGE;
+        values[1].data.d_image = gimp_image_ID;
+      }
+      else if (gimp_image_ID == LOAD_HEIF_CANCEL) {
+        // No image was selected.
+        status = GIMP_PDB_CANCEL;
+      }
+      else {
+        status = GIMP_PDB_EXECUTION_ERROR;
+      }
     }
-
-  if (status == GIMP_PDB_SUCCESS)
-    {
-#if 0
-      render (image_ID, drawable, &vals, &image_vals, &drawable_vals);
-
-      if (run_mode != GIMP_RUN_NONINTERACTIVE)
-	gimp_displays_flush ();
-
-      if (run_mode == GIMP_RUN_INTERACTIVE)
-	{
-	  gimp_set_data (DATA_KEY_VALS,    &vals,    sizeof (vals));
-	  gimp_set_data (DATA_KEY_UI_VALS, &ui_vals, sizeof (ui_vals));
-	}
-
-      gimp_drawable_detach (drawable);
-#endif
-    }
+  }
+  else {
+    status = GIMP_PDB_CALLING_ERROR;
+  }
 
   values[0].type = GIMP_PDB_STATUS;
   values[0].data.d_status = status;

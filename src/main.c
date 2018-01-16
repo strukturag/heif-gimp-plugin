@@ -150,9 +150,8 @@ gint32 load_heif(const gchar *name,
   heif_context_read_from_file(ctx, name);
 
   int num = heif_context_get_number_of_images(ctx);
-  //int primary = heif_context_get_primary_image_index(ctx);
 
-  int primary = -1;
+  int primary = 0; // if there is no primary image (invalid file), just take the first image
   int i;
   for (i=0; i<num; i++) {
     struct heif_image_handle* h;
@@ -160,10 +159,6 @@ gint32 load_heif(const gchar *name,
     if (heif_image_handle_is_primary_image(h)) {
       primary = i;
     }
-
-    int ww,hh;
-    heif_image_handle_get_resolution(h, &ww,&hh);
-    printf("resolution %d x %d\n",ww,hh);
 
     heif_image_handle_release(h);
   }
@@ -175,28 +170,26 @@ gint32 load_heif(const gchar *name,
     if (!dialog(num,primary,&result, ctx)) {
       return -2;
     }
-
-    printf("selected idx: %d\n", result.selected_image);
   }
 
   struct heif_image_handle* handle = 0;
-  //heif_context_get_primary_image_handle(ctx, &handle);
   heif_context_get_image_handle(ctx, result.selected_image, &handle);
 
-  //heif_image_handle_get_thumbnail(ctx,handle, 0, &handle);
+  int has_alpha = heif_image_handle_has_alpha_channel(handle);
 
   struct heif_image* img = 0;
   struct heif_error err = heif_decode_image(handle,
                                             heif_colorspace_RGB,
+                                            has_alpha ? heif_chroma_interleaved_32bit :
                                             heif_chroma_interleaved_24bit,
                                             &img);
   if (err.code) {
     // TODO(farindk): Handle error.
+    printf("ERR: %s\n",err.message);
   }
 
   int width = heif_image_get_width(img, heif_channel_interleaved);
   int height = heif_image_get_height(img, heif_channel_interleaved);
-
 
   // --- create GIMP image and copy HEIF image into the GIMP image (converting it to RGB)
 
@@ -206,7 +199,7 @@ gint32 load_heif(const gchar *name,
   gint32 layer_ID = gimp_layer_new(image_ID,
                                    "image content",
                                    width,height,
-                                   GIMP_RGB_IMAGE,
+                                   has_alpha ? GIMP_RGBA_IMAGE : GIMP_RGB_IMAGE,
                                    100.0,
                                    GIMP_NORMAL_MODE);
 

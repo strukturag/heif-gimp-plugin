@@ -6,96 +6,100 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gimp-plugin-template 2.2\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-01-02 16:55+0100\n"
-"PO-Revision-Date: 2003-11-29 13:36+0100\n"
+"POT-Creation-Date: 2018-01-17 15:42+0100\n"
+"PO-Revision-Date: 2018-01-17 15:47+0100\n"
 "Last-Translator: Sven Neumann <sven@gimp.org>\n"
 "Language-Team: German <de@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7.1\n"
 
-#: ../src/interface.c:78
-msgid "GIMP Plug-In Template"
-msgstr "GIMP Plug-In Vorlage"
+#: ../src/interface.c:82
+msgid "primary"
+msgstr "primäres Bild"
 
-#. gimp_scale_entry_new() examples
-#: ../src/interface.c:93
-msgid "ScaleEntry Examples"
-msgstr "ScaleEntry Beispiele"
+#: ../src/interface.c:208
+msgid "Load HEIF image content"
+msgstr "HEIF Bildinhalt laden"
 
-#: ../src/interface.c:106
-msgid "Dummy 1:"
-msgstr "Beispiel 1:"
+#: ../src/interface.c:219
+msgid "Select image"
+msgstr "Bild wählen"
 
-#: ../src/interface.c:109
-msgid "Dummy scale entry 1"
-msgstr "Scale Entry Beispiel 1"
-
-#: ../src/interface.c:115
-msgid "Dummy 2:"
-msgstr "Beispiel 2:"
-
-#: ../src/interface.c:118
-msgid "Dummy scale entry 2"
-msgstr "Scale Entry Beispiel 2"
-
-#: ../src/interface.c:124
-msgid "Dummy 3:"
-msgstr "Beispiel 3:"
-
-#: ../src/interface.c:127
-msgid "Dummy scale entry 3"
-msgstr "Scale Entry Beispiel 3"
-
-#. gimp_random_seed_new() example
-#: ../src/interface.c:134
-msgid "A Random Seed Entry"
-msgstr "Eingabefeld für den Anfangswert des Zufallsgenerators"
-
-#. gimp_coordinates_new() example
-#: ../src/interface.c:149
-msgid ""
-"A GimpCoordinates Widget\n"
-"Initialized with the Drawable's Size"
-msgstr ""
-"Ein GimpCoordinates Widget\n"
-"(Initialisiert mit der Größe des Drawables)"
-
-#: ../src/interface.c:167
-msgid "Width:"
-msgstr "Breite:"
-
-#: ../src/interface.c:171
-msgid "Height:"
-msgstr "Höhe:"
-
-#. Image and drawable menus
-#: ../src/interface.c:179
-msgid "Image and Drawable Menu Examples"
-msgstr "Bild und Drawable Menü Beispiele"
-
-#: ../src/interface.c:198
-msgid "Layers:"
-msgstr "Ebenen:"
-
-#: ../src/interface.c:206
-msgid "RGB Images:"
-msgstr "RGB Bilder:"
-
-#: ../src/main.c:123
+#: ../src/main.c:94
 msgid "Load HEIF images."
-msgstr ""
+msgstr "HEIF Bilder laden."
 
-#: ../src/main.c:124
+#: ../src/main.c:95
 msgid ""
 "Load image stored in HEIF format (High Efficiency Image File Format). "
 "Typical suffices for HEIF files are .heif, .heic."
 msgstr ""
+"Bild im HEIF Format (High Efficiency Image File Format) laden. Typische "
+"Fileendungen für HEIF Dateien sind .heif und .heic."
 
-#: ../src/main.c:128
+#: ../src/main.c:99
 msgid "Load HEIF image"
-msgstr ""
+msgstr "HEIF Bild laden"
+
+#: ../src/main.c:133
+msgid "Input file contains no readable images"
+msgstr "Eingabedatei enthält keine lesbaren Bilder"
+
+#: ../src/main.c:211
+msgid "image content"
+msgstr "HEIF Bild"
+
+#~ msgid "GIMP Plug-In Template"
+#~ msgstr "GIMP Plug-In Vorlage"
+
+#~ msgid "ScaleEntry Examples"
+#~ msgstr "ScaleEntry Beispiele"
+
+#~ msgid "Dummy 1:"
+#~ msgstr "Beispiel 1:"
+
+#~ msgid "Dummy scale entry 1"
+#~ msgstr "Scale Entry Beispiel 1"
+
+#~ msgid "Dummy 2:"
+#~ msgstr "Beispiel 2:"
+
+#~ msgid "Dummy scale entry 2"
+#~ msgstr "Scale Entry Beispiel 2"
+
+#~ msgid "Dummy 3:"
+#~ msgstr "Beispiel 3:"
+
+#~ msgid "Dummy scale entry 3"
+#~ msgstr "Scale Entry Beispiel 3"
+
+#~ msgid "A Random Seed Entry"
+#~ msgstr "Eingabefeld für den Anfangswert des Zufallsgenerators"
+
+#~ msgid ""
+#~ "A GimpCoordinates Widget\n"
+#~ "Initialized with the Drawable's Size"
+#~ msgstr ""
+#~ "Ein GimpCoordinates Widget\n"
+#~ "(Initialisiert mit der Größe des Drawables)"
+
+#~ msgid "Width:"
+#~ msgstr "Breite:"
+
+#~ msgid "Height:"
+#~ msgstr "Höhe:"
+
+#~ msgid "Image and Drawable Menu Examples"
+#~ msgstr "Bild und Drawable Menü Beispiele"
+
+#~ msgid "Layers:"
+#~ msgstr "Ebenen:"
+
+#~ msgid "RGB Images:"
+#~ msgstr "RGB Bilder:"
 
 #~ msgid "Plug-In Template..."
 #~ msgstr "GIMP Plug-In Vorlage..."

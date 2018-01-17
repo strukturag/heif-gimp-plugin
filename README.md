@@ -15,11 +15,9 @@ best compression ratios currently possible.
 
 ## Features
 
-HEIF files can contain several images in one file. When opening such a file,
-a dialog will open to let you choose the image from a list of thumbnails.
-
-HEIF files with alpha channels are supported.
-
+* HEIF files can contain several images in one file. When opening such a file, a dialog will open to let you choose the image from a list of thumbnails.
+* alpha channels
+* Exif data
 
 ## Installation
 

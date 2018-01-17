@@ -247,15 +247,15 @@ gint32 load_heif(const gchar *filename, int interactive)
 
   int i;
   for (i=0; i<heif_image_handle_get_number_of_metadata_blocks(handle); i++) {
-    size_t data_size;
-    const char* data_type;
-
-    heif_image_handle_query_metadata(handle, i, &data_size, &data_type);
-    const int heif_exif_skip = 4;
+    const char* data_type = heif_image_handle_get_metadata_type(handle, i);
 
     if (strcmp(data_type,"Exif")==0) {
+      size_t data_size = heif_image_handle_get_metadata_size(handle, i);
+
       uint8_t* data = alloca(data_size);
       err = heif_image_handle_get_metadata(handle, i, data);
+
+      const int heif_exif_skip = 4;
 
       gimp_image_attach_new_parasite(image_ID,
                                      "exif-data",

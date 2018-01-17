@@ -259,6 +259,23 @@ gboolean dialog(struct heif_context* heif,
   gtk_widget_show(iconview);
 
 
+  // pre-select the primary image
+
+  int selected_idx = -1;
+  for (i=0; i<numImages; i++) {
+    if (heif_images[i].ID == *selected_image) {
+      selected_idx = i;
+      break;
+    }
+  }
+
+  if (selected_idx != -1) {
+    GtkTreePath *path = gtk_tree_path_new_from_indices(selected_idx, -1);
+    gtk_icon_view_select_path((GtkIconView*)iconview, path);
+    gtk_tree_path_free(path);
+  }
+
+
   gtk_widget_show (main_vbox);
   gtk_widget_show (dlg);
 

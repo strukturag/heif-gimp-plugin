@@ -29,65 +29,21 @@
 #include "plugin-intl.h"
 
 
-/*  Constants  */
-
-#define SCALE_WIDTH        180
-#define SPIN_BUTTON_WIDTH   75
-#define RANDOM_SEED_WIDTH  100
+#define MAX_THUMBNAIL_SIZE 320
 
 
-/*  Local function prototypes  */
-
-#if 0
-static gboolean   dialog_image_constraint_func (gint32    image_id,
-                                                gpointer  data);
-#endif
-
-
-/*  Local variables  */
-
-#if 0
-static PlugInUIVals *ui_state = NULL;
-#endif
-
-
-/*  Public functions  */
-
-gboolean
-dialog (int num_images,
-        uint32_t* selected_image,
-        struct heif_context* heif)
-
-/*
-image_ID,
-	GimpDrawable       *drawable,
-	PlugInVals         *vals,
-	PlugInImageVals    *image_vals,
-	PlugInDrawableVals *drawable_vals,
-	PlugInUIVals       *ui_vals)
-*/
+gboolean dialog(int num_images,
+                uint32_t* selected_image,
+                struct heif_context* heif)
 {
   GtkWidget *dlg;
   GtkWidget *main_vbox;
   GtkWidget *frame;
   gboolean   run = FALSE;
-#if 0
-  GtkWidget *table;
-  GtkWidget *hbox;
-  GtkWidget *hbox2;
-  GtkWidget *coordinates;
-  GtkWidget *combo;
-  GtkObject *adj;
-  gint       row;
-  GimpUnit   unit;
-  gdouble    xres, yres;
-#endif
 
   int i;
 
   struct heif_error err;
-
-  //ui_state = ui_vals;
 
   gimp_ui_init (PLUGIN_NAME, TRUE);
 
@@ -103,31 +59,6 @@ image_ID,
   main_vbox = gtk_vbox_new (FALSE, 12);
   gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 12);
   gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dlg)->vbox), main_vbox);
-
-  /*  gimp_scale_entry_new() examples  */
-
-#if 0
-  frame = gimp_frame_new (_("Select image"));
-  gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
-  gtk_widget_show (frame);
-
-
-  GtkWidget* combobox = gtk_combo_box_text_new();
-
-  int i;
-  for (i = 0; i < num_images; i++)
-    {
-      gchar some_data[20];
-      sprintf(some_data,"image %d%s",i+1,
-              i == primary_image ? " (primary)" : "");
-      gtk_combo_box_text_append_text((GtkComboBoxText*) combobox, some_data);
-    }
-
-  gtk_combo_box_set_active ((GtkComboBox*) combobox, primary_image);
-
-  gtk_container_add (GTK_CONTAINER (frame), combobox);
-  gtk_widget_show(combobox);
-#endif
 
 
   frame = gimp_frame_new (_("Select image"));
@@ -154,45 +85,89 @@ image_ID,
     char buf[100];
     int width,height;
     heif_image_handle_get_resolution(handle,&width,&height);
-    sprintf(buf,"%dx%d%s", width,height,
-            heif_image_handle_is_primary_image(handle) ? " (primary)":"");
+
+    if (heif_image_handle_is_primary_image(handle)) {
+      sprintf(buf,"%dx%d (%s)", width,height, _("primary"));
+    }
+    else {
+      sprintf(buf,"%dx%d", width,height);
+    }
 
     gtk_list_store_append(liststore, &iter);
     gtk_list_store_set(liststore, &iter, 0, buf, -1);
 
+    struct heif_image_handle* thumbnail_handle;
     if (heif_image_handle_get_number_of_thumbnails(handle)) {
-      struct heif_image_handle* thumbnail_handle;
       heif_image_handle_get_thumbnail(handle, 0, &thumbnail_handle);
-
-      struct heif_image* thumbnail_img;
-      err = heif_decode_image(thumbnail_handle,
-                              heif_colorspace_RGB, heif_chroma_interleaved_24bit,
-                              &thumbnail_img);
-
-      int stride;
-      const uint8_t* data = heif_image_get_plane_readonly(thumbnail_img,
-                                                          heif_channel_interleaved,
-                                                          &stride);
-
-      int thumbnail_width,thumbnail_height;
-      heif_image_handle_get_resolution(thumbnail_handle,
-                                       &thumbnail_width,&thumbnail_height);
-
-      GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (data,
-                                                    GDK_COLORSPACE_RGB,
-                                                    FALSE,
-                                                    8,
-                                                    thumbnail_width,
-                                                    thumbnail_height,
-                                                    stride,
-                                                    NULL,
-                                                    NULL);
-
-      gtk_list_store_set(liststore, &iter, 1, pixbuf, -1);
-
-      // heif_image_release(thumbnail_img);  // TODO: free image, but keep image data for pixbuf...
-      //heif_image_handle_release(thumbnail_handle);
     }
+    else {
+      err = heif_context_get_image_handle(heif, i, &thumbnail_handle);
+      // TODO err
+    }
+
+    struct heif_image* thumbnail_img;
+    err = heif_decode_image(thumbnail_handle,
+                            heif_colorspace_RGB, heif_chroma_interleaved_24bit,
+                            &thumbnail_img);
+
+    int thumbnail_width,thumbnail_height;
+    heif_image_handle_get_resolution(thumbnail_handle,
+                                     &thumbnail_width,&thumbnail_height);
+
+    if (thumbnail_width > MAX_THUMBNAIL_SIZE ||
+        thumbnail_height > MAX_THUMBNAIL_SIZE) {
+      float factor_h = thumbnail_width  / (float)MAX_THUMBNAIL_SIZE;
+      float factor_v = thumbnail_height / (float)MAX_THUMBNAIL_SIZE;
+
+      int new_width, new_height;
+
+      if (factor_v > factor_h) {
+        new_height = MAX_THUMBNAIL_SIZE;
+        new_width  = thumbnail_width / factor_v;
+      }
+      else {
+        new_height = thumbnail_height / factor_h;
+        new_width  = MAX_THUMBNAIL_SIZE;
+      }
+
+      struct heif_image* scaled_img = NULL;
+
+      struct heif_error err = heif_image_scale_image(thumbnail_img,
+                                                     &scaled_img,
+                                                     new_width, new_height,
+                                                     NULL);
+
+      if (err.code) {
+        printf("err scale: %d\n",err.code);
+      }
+      // TODO err
+
+      heif_image_release(thumbnail_img);
+      thumbnail_img = scaled_img;
+
+      thumbnail_width = new_width;
+      thumbnail_height = new_height;
+    }
+
+    int stride;
+    const uint8_t* data = heif_image_get_plane_readonly(thumbnail_img,
+                                                        heif_channel_interleaved,
+                                                        &stride);
+
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_data (data,
+                                                  GDK_COLORSPACE_RGB,
+                                                  FALSE,
+                                                  8,
+                                                  thumbnail_width,
+                                                  thumbnail_height,
+                                                  stride,
+                                                  NULL,
+                                                  NULL);
+
+    gtk_list_store_set(liststore, &iter, 1, pixbuf, -1);
+
+    // heif_image_release(thumbnail_img);  // TODO: free image, but keep image data for pixbuf...
+    heif_image_handle_release(thumbnail_handle);
 
     heif_image_handle_release(handle);
   }
@@ -259,7 +234,7 @@ image_ID,
   /*  gimp_coordinates_new() example  */
 
   frame = gimp_frame_new (_("A GimpCoordinates Widget\n"
-			   "Initialized with the Drawable's Size"));
+                            "Initialized with the Drawable's Size"));
   gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
   gtk_widget_show (frame);
 
@@ -329,7 +304,7 @@ image_ID,
     {
       /*  Save ui values  */
       /*
-      ui_state->chain_active =
+        ui_state->chain_active =
         gimp_chain_button_get_active (GIMP_COORDINATES_CHAINBUTTON (coordinates));
       */
 

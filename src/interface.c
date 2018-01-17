@@ -22,6 +22,7 @@
 
 #include <libgimp/gimp.h>
 #include <libgimp/gimpui.h>
+#include <assert.h>
 
 #include "main.h"
 #include "interface.h"
@@ -32,83 +33,93 @@
 #define MAX_THUMBNAIL_SIZE 320
 
 
-gboolean dialog(int num_images,
-                uint32_t* selected_image,
-                struct heif_context* heif)
+struct HeifImage
 {
-  GtkWidget *dlg;
-  GtkWidget *main_vbox;
-  GtkWidget *frame;
-  gboolean   run = FALSE;
+  uint32_t ID;
+  char caption[100]; // image text (filled with resolution description)
+  struct heif_image* thumbnail;
+  int width, height;
+};
 
+
+gboolean load_thumbnails(struct heif_context* heif,
+                         struct HeifImage* images)
+{
   int i;
 
-  struct heif_error err;
-
-  gimp_ui_init (PLUGIN_NAME, TRUE);
-
-  dlg = gimp_dialog_new (_("Load HEIF image content"), PLUGIN_NAME,
-                         NULL, 0,
-			 gimp_standard_help_func, "plug-in-template", // TODO
-
-			 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-			 GTK_STOCK_OK,     GTK_RESPONSE_OK,
-
-			 NULL);
-
-  main_vbox = gtk_vbox_new (FALSE, 12);
-  gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 12);
-  gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dlg)->vbox), main_vbox);
-
-
-  frame = gimp_frame_new (_("Select image"));
-  gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
-  gtk_widget_show (frame);
-
-  GtkListStore* liststore;
-  GtkTreeIter   iter;
-
-  liststore = gtk_list_store_new(2, G_TYPE_STRING, GDK_TYPE_PIXBUF);
   int numImages = heif_context_get_number_of_top_level_images(heif);
+
+  // get list of all (top level) image IDs
+
   uint32_t* IDs = (uint32_t*)alloca(numImages * sizeof(uint32_t));
   heif_context_get_list_of_top_level_image_IDs(heif, IDs, numImages);
 
+
+  // --- Load a thumbnail for each image.
+
   for (i=0; i<numImages; i++) {
 
+    images[i].ID = IDs[i];
+    images[i].caption[0] = 0;
+    images[i].thumbnail = NULL;
+
+    // get image handle
+
     struct heif_image_handle* handle;
-    err = heif_context_get_image_handle(heif, i, &handle);
+    struct heif_error err = heif_context_get_image_handle(heif, i, &handle);
     if (err.code) {
-      // TODO(farindk): Handle error.
+      gimp_message(err.message);
       continue;
     }
 
-    char buf[100];
+
+    // generate image caption
+
     int width,height;
     heif_image_handle_get_resolution(handle,&width,&height);
 
     if (heif_image_handle_is_primary_image(handle)) {
-      sprintf(buf,"%dx%d (%s)", width,height, _("primary"));
+      sprintf(images[i].caption, "%dx%d (%s)", width,height, _("primary"));
     }
     else {
-      sprintf(buf,"%dx%d", width,height);
+      sprintf(images[i].caption, "%dx%d", width,height);
     }
 
-    gtk_list_store_append(liststore, &iter);
-    gtk_list_store_set(liststore, &iter, 0, buf, -1);
+
+    // get handle to thumbnail image
+    // if there is no thumbnail image, just the the image itself (will be scaled down later)
 
     struct heif_image_handle* thumbnail_handle;
+
     if (heif_image_handle_get_number_of_thumbnails(handle)) {
-      heif_image_handle_get_thumbnail(handle, 0, &thumbnail_handle);
+      err = heif_image_handle_get_thumbnail(handle, 0, &thumbnail_handle);
+      if (err.code) {
+        gimp_message(err.message);
+        continue;
+      }
     }
     else {
       err = heif_context_get_image_handle(heif, i, &thumbnail_handle);
-      // TODO err
+      if (err.code) {
+        gimp_message(err.message);
+        continue;
+      }
     }
+
+
+    // decode the thumbnail image
 
     struct heif_image* thumbnail_img;
     err = heif_decode_image(thumbnail_handle,
                             heif_colorspace_RGB, heif_chroma_interleaved_24bit,
                             &thumbnail_img);
+    if (err.code) {
+      gimp_message(err.message);
+      continue;
+    }
+
+
+    // if thumbnail image size exceeds the maximum, scale it down
 
     int thumbnail_width,thumbnail_height;
     heif_image_handle_get_resolution(thumbnail_handle,
@@ -116,6 +127,9 @@ gboolean dialog(int num_images,
 
     if (thumbnail_width > MAX_THUMBNAIL_SIZE ||
         thumbnail_height > MAX_THUMBNAIL_SIZE) {
+
+      // compute scaling factor to fit into a max sized box
+
       float factor_h = thumbnail_width  / (float)MAX_THUMBNAIL_SIZE;
       float factor_v = thumbnail_height / (float)MAX_THUMBNAIL_SIZE;
 
@@ -130,17 +144,22 @@ gboolean dialog(int num_images,
         new_width  = MAX_THUMBNAIL_SIZE;
       }
 
+
+      // scale the image
+
       struct heif_image* scaled_img = NULL;
 
       struct heif_error err = heif_image_scale_image(thumbnail_img,
                                                      &scaled_img,
                                                      new_width, new_height,
                                                      NULL);
-
       if (err.code) {
-        printf("err scale: %d\n",err.code);
+        gimp_message(err.message);
+        continue;
       }
-      // TODO err
+
+
+      // release the old image and only keep the scaled down version
 
       heif_image_release(thumbnail_img);
       thumbnail_img = scaled_img;
@@ -149,8 +168,72 @@ gboolean dialog(int num_images,
       thumbnail_height = new_height;
     }
 
+    heif_image_handle_release(thumbnail_handle);
+    heif_image_handle_release(handle);
+
+
+    // remember the HEIF thumbnail image (we need it for the GdkPixbuf)
+
+    images[i].thumbnail = thumbnail_img;
+
+    images[i].width = thumbnail_width;
+    images[i].height = thumbnail_height;
+  }
+
+  return TRUE;
+}
+
+
+gboolean dialog(struct heif_context* heif,
+                uint32_t* selected_image)
+{
+  GtkWidget *dlg;
+  GtkWidget *main_vbox;
+  GtkWidget *frame;
+  gboolean   run = FALSE;
+
+  int i;
+
+
+  int numImages = heif_context_get_number_of_top_level_images(heif);
+
+  struct HeifImage* heif_images = (struct HeifImage*)alloca(numImages * sizeof(struct HeifImage));
+  gboolean success = load_thumbnails(heif, heif_images);
+  if (!success) {
+    return FALSE;
+  }
+
+  gimp_ui_init (PLUGIN_NAME, TRUE);
+
+  dlg = gimp_dialog_new (_("Load HEIF image content"), PLUGIN_NAME,
+                         NULL, 0,
+                         NULL, 0, //gimp_standard_help_func, "plug-in-template", // TODO
+			 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			 GTK_STOCK_OK,     GTK_RESPONSE_OK,
+			 NULL);
+
+  main_vbox = gtk_vbox_new (FALSE, 12);
+  gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 12);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dlg)->vbox), main_vbox);
+
+  frame = gimp_frame_new (_("Select image"));
+  gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
+  gtk_widget_show (frame);
+
+
+  // prepare list store with all thumbnails and caption
+
+  GtkListStore* liststore;
+  GtkTreeIter   iter;
+
+  liststore = gtk_list_store_new(2, G_TYPE_STRING, GDK_TYPE_PIXBUF);
+
+  for (i=0; i<numImages; i++) {
+    gtk_list_store_append(liststore, &iter);
+    gtk_list_store_set(liststore, &iter, 0, heif_images[i].caption, -1);
+
     int stride;
-    const uint8_t* data = heif_image_get_plane_readonly(thumbnail_img,
+    const uint8_t* data = heif_image_get_plane_readonly(heif_images[i].thumbnail,
                                                         heif_channel_interleaved,
                                                         &stride);
 
@@ -158,19 +241,15 @@ gboolean dialog(int num_images,
                                                   GDK_COLORSPACE_RGB,
                                                   FALSE,
                                                   8,
-                                                  thumbnail_width,
-                                                  thumbnail_height,
+                                                  heif_images[i].width,
+                                                  heif_images[i].height,
                                                   stride,
                                                   NULL,
                                                   NULL);
 
     gtk_list_store_set(liststore, &iter, 1, pixbuf, -1);
-
-    // heif_image_release(thumbnail_img);  // TODO: free image, but keep image data for pixbuf...
-    heif_image_handle_release(thumbnail_handle);
-
-    heif_image_handle_release(handle);
   }
+
 
   GtkWidget* iconview = gtk_icon_view_new();
   gtk_icon_view_set_model((GtkIconView*) iconview, (GtkTreeModel*) liststore);
@@ -180,160 +259,32 @@ gboolean dialog(int num_images,
   gtk_widget_show(iconview);
 
 
-#if 0
-  table = gtk_table_new (3, 3, FALSE);
-  gtk_table_set_col_spacings (GTK_TABLE (table), 6);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 2);
-  gtk_container_add (GTK_CONTAINER (frame), table);
-  gtk_widget_show (table);
-
-  row = 0;
-
-  adj = gimp_scale_entry_new (GTK_TABLE (table), 0, row++,
-			      _("Dummy 1:"), SCALE_WIDTH, SPIN_BUTTON_WIDTH,
-			      vals->dummy1, 0, 100, 1, 10, 0,
-			      TRUE, 0, 0,
-			      _("Dummy scale entry 1"), NULL);
-  g_signal_connect (adj, "value_changed",
-                    G_CALLBACK (gimp_int_adjustment_update),
-                    &vals->dummy1);
-
-  adj = gimp_scale_entry_new (GTK_TABLE (table), 0, row++,
-			      _("Dummy 2:"), SCALE_WIDTH, SPIN_BUTTON_WIDTH,
-			      vals->dummy2, 0, 200, 1, 10, 0,
-			      TRUE, 0, 0,
-			      _("Dummy scale entry 2"), NULL);
-  g_signal_connect (adj, "value_changed",
-                    G_CALLBACK (gimp_int_adjustment_update),
-                    &vals->dummy2);
-
-  adj = gimp_scale_entry_new (GTK_TABLE (table), 0, row++,
-			      _("Dummy 3:"), SCALE_WIDTH, SPIN_BUTTON_WIDTH,
-			      vals->dummy3, -100, 100, 1, 10, 0,
-			      TRUE, 0, 0,
-			      _("Dummy scale entry 3"), NULL);
-  g_signal_connect (adj, "value_changed",
-                    G_CALLBACK (gimp_int_adjustment_update),
-                    &vals->dummy3);
-
-  /*  gimp_random_seed_new() example  */
-
-  frame = gimp_frame_new (_("A Random Seed Entry"));
-  gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
-  gtk_widget_show (frame);
-  hbox = gtk_hbox_new (FALSE, 6);
-  gtk_container_add (GTK_CONTAINER (frame), hbox);
-  gtk_widget_show (hbox);
-
-  hbox2 = gimp_random_seed_new (&vals->seed, &vals->random_seed);
-  gtk_widget_set_size_request (GTK_WIDGET (GIMP_RANDOM_SEED_SPINBUTTON (hbox2)),
-                               RANDOM_SEED_WIDTH, -1);
-  gtk_box_pack_start (GTK_BOX (hbox), hbox2, FALSE, FALSE, 0);
-  gtk_widget_show (hbox2);
-
-  /*  gimp_coordinates_new() example  */
-
-  frame = gimp_frame_new (_("A GimpCoordinates Widget\n"
-                            "Initialized with the Drawable's Size"));
-  gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
-  gtk_widget_show (frame);
-
-  hbox = gtk_hbox_new (FALSE, 4);
-  gtk_container_set_border_width (GTK_CONTAINER (hbox), 4);
-  gtk_container_add (GTK_CONTAINER (frame), hbox);
-  gtk_widget_show (hbox);
-
-  //OBS unit = gimp_image_get_unit (image_ID);
-  //OBS gimp_image_get_resolution (image_ID, &xres, &yres);
-
-  coordinates = gimp_coordinates_new (unit, "%p", TRUE, TRUE, SPIN_BUTTON_WIDTH,
-				      GIMP_SIZE_ENTRY_UPDATE_SIZE,
-
-				      ui_vals->chain_active, TRUE,
-
-				      _("Width:"), drawable->width, xres,
-				      1, GIMP_MAX_IMAGE_SIZE,
-				      0, drawable->width,
-
-				      _("Height:"), drawable->height, yres,
-				      1, GIMP_MAX_IMAGE_SIZE,
-				      0, drawable->height);
-  gtk_box_pack_start (GTK_BOX (hbox), coordinates, FALSE, FALSE, 0);
-  gtk_widget_show (coordinates);
-
-  /*  Image and drawable menus  */
-
-  frame = gimp_frame_new (_("Image and Drawable Menu Examples"));
-  gtk_box_pack_start (GTK_BOX (main_vbox), frame, FALSE, FALSE, 0);
-  gtk_widget_show (frame);
-
-  table = gtk_table_new (3, 2, FALSE);
-  gtk_container_set_border_width (GTK_CONTAINER (table), 4);
-  gtk_table_set_col_spacings (GTK_TABLE (table), 4);
-  gtk_table_set_row_spacings (GTK_TABLE (table), 2);
-  gtk_container_add (GTK_CONTAINER (frame), table);
-  gtk_widget_show (table);
-
-  row = 0;
-
-  combo = gimp_layer_combo_box_new (NULL, NULL);
-  gimp_int_combo_box_connect (GIMP_INT_COMBO_BOX (combo), drawable->drawable_id,
-                              G_CALLBACK (gimp_int_combo_box_get_active),
-                              &drawable_vals->drawable_id);
-
-  gimp_table_attach_aligned (GTK_TABLE (table), 0, row++,
-			     _("Layers:"), 0.0, 0.5, combo, 1, FALSE);
-
-  combo = gimp_image_combo_box_new (dialog_image_constraint_func, NULL);
-  gimp_int_combo_box_connect (GIMP_INT_COMBO_BOX (combo), image_ID,
-                              G_CALLBACK (gimp_int_combo_box_get_active),
-                              &image_vals->image_id);
-
-  gimp_table_attach_aligned (GTK_TABLE (table), 0, row++,
-			     _("RGB Images:"), 0.0, 0.5, combo, 1, FALSE);
-
-  /*  Show the main containers  */
-#endif
-
   gtk_widget_show (main_vbox);
   gtk_widget_show (dlg);
 
   run = (gimp_dialog_run (GIMP_DIALOG (dlg)) == GTK_RESPONSE_OK);
 
-  if (run)
-    {
-      /*  Save ui values  */
-      /*
-        ui_state->chain_active =
-        gimp_chain_button_get_active (GIMP_COORDINATES_CHAINBUTTON (coordinates));
-      */
+  if (run) {
+    GList* selected_items = gtk_icon_view_get_selected_items((GtkIconView*) iconview);
 
-      //ui_result->selected_image = gtk_combo_box_get_active(combobox);
+    if (selected_items) {
+      GtkTreePath* path = (GtkTreePath*)(selected_items->data);
+      gint* indices = gtk_tree_path_get_indices(path);
+
+      *selected_image = heif_images[indices[0]].ID;
+
+      g_list_free_full(selected_items, (GDestroyNotify) gtk_tree_path_free);
     }
-
-  GList* selected_items = gtk_icon_view_get_selected_items((GtkIconView*) iconview);
-  if (selected_items) {
-    GtkTreePath* path = (GtkTreePath*)(selected_items->data);
-    gint* indices = gtk_tree_path_get_indices(path);
-
-    *selected_image = IDs[indices[0]];
-
-    g_list_free_full(selected_items, (GDestroyNotify) gtk_tree_path_free);
   }
 
   gtk_widget_destroy (dlg);
 
+
+  // release thumbnail images
+
+  for (i=0 ; i<numImages ; i++) {
+    heif_image_release(heif_images[i].thumbnail);
+  }
+
   return run;
 }
-
-
-/*  Private functions  */
-
-#if 0
-static gboolean
-dialog_image_constraint_func (gint32    image_id,
-                              gpointer  data)
-{
-  return (gimp_image_base_type (image_id) == GIMP_RGB);
-}
-#endif

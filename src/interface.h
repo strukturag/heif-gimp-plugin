@@ -27,8 +27,8 @@
 
 /*  Public functions  */
 
-gboolean   dialog (int num_images,
-                   uint32_t* selected_image,
-                   struct heif_context* heif);
+gboolean   dialog (struct heif_context* heif,
+                   uint32_t* selected_image);
+
 
 #endif /* __INTERFACE_H__ */

@@ -163,7 +163,7 @@ gint32 load_heif(const gchar *filename, int interactive)
   // let the user choose a picture
 
   if (interactive && num > 1) {
-    if (!dialog(num,&selected_image, ctx)) {
+    if (!dialog(ctx, &selected_image)) {
       heif_context_free(ctx);
       return LOAD_HEIF_CANCEL;
     }

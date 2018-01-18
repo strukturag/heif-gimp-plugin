@@ -75,8 +75,8 @@ gboolean load_thumbnails(struct heif_context* heif,
 
     // generate image caption
 
-    int width,height;
-    heif_image_handle_get_resolution(handle,&width,&height);
+    int width = heif_image_handle_get_width(handle);
+    int height = heif_image_handle_get_height(handle);
 
     if (heif_image_handle_is_primary_image(handle)) {
       sprintf(images[i].caption, "%dx%d (%s)", width,height, _("primary"));
@@ -122,9 +122,8 @@ gboolean load_thumbnails(struct heif_context* heif,
 
     // if thumbnail image size exceeds the maximum, scale it down
 
-    int thumbnail_width,thumbnail_height;
-    heif_image_handle_get_resolution(thumbnail_handle,
-                                     &thumbnail_width,&thumbnail_height);
+    int thumbnail_width = heif_image_handle_get_width(thumbnail_handle);
+    int thumbnail_height = heif_image_handle_get_height(thumbnail_handle);
 
     if (thumbnail_width > MAX_THUMBNAIL_SIZE ||
         thumbnail_height > MAX_THUMBNAIL_SIZE) {

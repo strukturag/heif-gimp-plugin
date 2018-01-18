@@ -185,10 +185,11 @@ gint32 load_heif(const gchar *filename, int interactive)
 
   struct heif_image* img = 0;
   err = heif_decode_image(handle,
+                          &img,
                           heif_colorspace_RGB,
                           has_alpha ? heif_chroma_interleaved_32bit :
                           heif_chroma_interleaved_24bit,
-                          &img);
+                          NULL);
 
   if (err.code) {
     heif_image_handle_release(handle);

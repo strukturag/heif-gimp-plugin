@@ -111,8 +111,9 @@ gboolean load_thumbnails(struct heif_context* heif,
 
     struct heif_image* thumbnail_img;
     err = heif_decode_image(thumbnail_handle,
+                            &thumbnail_img,
                             heif_colorspace_RGB, heif_chroma_interleaved_24bit,
-                            &thumbnail_img);
+                            NULL);
     if (err.code) {
       gimp_message(err.message);
       continue;

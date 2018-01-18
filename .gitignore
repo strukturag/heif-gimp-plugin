@@ -16,5 +16,5 @@ Makefile.in.in
 missing
 po/POTFILES
 po/stamp-it
-src/gimp-plugin-template
+src/heif-gimp-plugin
 stamp-h1

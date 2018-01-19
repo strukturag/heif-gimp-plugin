@@ -117,7 +117,7 @@ gint32 load_heif(const gchar *filename, int interactive)
   struct heif_error err;
 
   struct heif_context* ctx = heif_context_alloc();
-  err = heif_context_read_from_file(ctx, filename);
+  err = heif_context_read_from_file(ctx, filename, NULL);
   if (err.code) {
     gimp_message(err.message);
     heif_context_free(ctx);

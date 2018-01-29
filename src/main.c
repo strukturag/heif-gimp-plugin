@@ -238,13 +238,25 @@ gint32 load_heif(const gchar *filename, int interactive)
   int stride;
   const uint8_t* data = heif_image_get_plane_readonly(img, heif_channel_interleaved, &stride);
 
-  int y;
-  for (y=0;y<height;y++) {
-    gimp_pixel_rgn_set_row(&rgn_out,
-                           data+y*stride,
-                           0,y,width);
-  }
+  int bpp = heif_image_get_bits_per_pixel(img, heif_channel_interleaved)/8;
 
+  if (stride == width*bpp) {
+    // we can transfer the whole image at once
+
+    gimp_pixel_rgn_set_rect(&rgn_out,
+                            data,
+                            0,0,width,height);
+  }
+  else {
+    int y;
+    for (y=0;y<height;y++) {
+      // stride has some padding, we have to send the image line by line
+
+      gimp_pixel_rgn_set_row(&rgn_out,
+                             data+y*stride,
+                             0,y,width);
+    }
+  }
 
   int i;
   for (i=0; i<heif_image_handle_get_number_of_metadata_blocks(handle); i++) {

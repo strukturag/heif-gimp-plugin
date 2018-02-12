@@ -138,7 +138,7 @@ gint32 load_heif(const gchar *filename, int interactive)
 
   // get the primary image
 
-  uint32_t primary;
+  heif_item_id primary;
 
   err = heif_context_get_primary_image_ID(ctx, &primary);
   if (err.code) {
@@ -156,7 +156,7 @@ gint32 load_heif(const gchar *filename, int interactive)
   }
 
 
-  uint32_t selected_image = primary;
+  heif_item_id selected_image = primary;
 
 
   // if there are several images in the file and we are running interactive,
@@ -174,7 +174,7 @@ gint32 load_heif(const gchar *filename, int interactive)
   // load the picture
 
   struct heif_image_handle* handle = 0;
-  err = heif_context_get_image_handle_for_ID(ctx, selected_image, &handle);
+  err = heif_context_get_image_handle(ctx, selected_image, &handle);
   if (err.code) {
     gimp_message(err.message);
     heif_context_free(ctx);

@@ -66,7 +66,7 @@ gboolean load_thumbnails(struct heif_context* heif,
     // get image handle
 
     struct heif_image_handle* handle;
-    struct heif_error err = heif_context_get_image_handle(heif, i, &handle);
+    struct heif_error err = heif_context_get_image_handle(heif, IDs[i], &handle);
     if (err.code) {
       gimp_message(err.message);
       continue;
@@ -90,16 +90,19 @@ gboolean load_thumbnails(struct heif_context* heif,
     // if there is no thumbnail image, just the the image itself (will be scaled down later)
 
     struct heif_image_handle* thumbnail_handle;
+    heif_item_id thumbnail_ID;
 
-    if (heif_image_handle_get_number_of_thumbnails(handle)) {
-      err = heif_image_handle_get_thumbnail(handle, 0, &thumbnail_handle);
+    int nThumbnails = heif_image_handle_get_list_of_thumbnail_IDs(handle, &thumbnail_ID, 1);
+
+    if (nThumbnails > 0) {
+      err = heif_image_handle_get_thumbnail(handle, thumbnail_ID, &thumbnail_handle);
       if (err.code) {
         gimp_message(err.message);
         continue;
       }
     }
     else {
-      err = heif_context_get_image_handle(heif, i, &thumbnail_handle);
+      err = heif_context_get_image_handle(heif, IDs[i], &thumbnail_handle);
       if (err.code) {
         gimp_message(err.message);
         continue;

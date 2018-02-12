@@ -258,24 +258,23 @@ gint32 load_heif(const gchar *filename, int interactive)
     }
   }
 
-  int i;
-  for (i=0; i<heif_image_handle_get_number_of_metadata_blocks(handle); i++) {
-    const char* data_type = heif_image_handle_get_metadata_type(handle, i);
+  int num_metadata;
+  heif_item_id metadata_id;
+  num_metadata = heif_image_handle_get_list_of_metadata_block_IDs(handle, "Exif", &metadata_id, 1);
 
-    if (strcmp(data_type,"Exif")==0) {
-      size_t data_size = heif_image_handle_get_metadata_size(handle, i);
+  if (num_metadata>0) {
+    size_t data_size = heif_image_handle_get_metadata_size(handle, metadata_id);
 
-      uint8_t* data = alloca(data_size);
-      err = heif_image_handle_get_metadata(handle, i, data);
+    uint8_t* data = alloca(data_size);
+    err = heif_image_handle_get_metadata(handle, metadata_id, data);
 
-      const int heif_exif_skip = 4;
+    const int heif_exif_skip = 4;
 
-      gimp_image_attach_new_parasite(image_ID,
-                                     "exif-data",
-                                     0,
-                                     data_size - heif_exif_skip,
-                                     data + heif_exif_skip);
-    }
+    gimp_image_attach_new_parasite(image_ID,
+                                   "exif-data",
+                                   0,
+                                   data_size - heif_exif_skip,
+                                   data + heif_exif_skip);
   }
 
   gimp_drawable_flush (drawable);

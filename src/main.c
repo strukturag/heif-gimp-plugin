@@ -37,6 +37,7 @@
 /*  Constants  */
 
 #define LOAD_PROC   "load_heif_file"
+#define SAVE_PROC   "save_heif_file"
 
 /*  Local function prototypes  */
 
@@ -76,6 +77,19 @@ query (void)
       { GIMP_PDB_IMAGE, "image", "Output image" }
     };
 
+
+  static const GimpParamDef save_args[] =
+    {
+      { GIMP_PDB_INT32,    "run-mode",     "The run mode { RUN-NONINTERACTIVE (1) }" },
+      { GIMP_PDB_IMAGE,    "image",        "Input image"                  },
+      { GIMP_PDB_DRAWABLE, "drawable",     "Drawable to export"           },
+      { GIMP_PDB_STRING,   "filename",     "The name of the file to export the image in" },
+      { GIMP_PDB_STRING,   "raw-filename", "The name of the file to export the image in" },
+      { GIMP_PDB_INT32,    "quality",      "Quality factor (range: 0-100. 0 = worst, 100 = best)" },
+      { GIMP_PDB_INT32,    "lossless",     "Use lossless compression (0 = lossy, 1 = lossless)" }
+    };
+
+
   gimp_plugin_domain_register (PLUGIN_NAME, LOCALEDIR);
 
   /*
@@ -105,6 +119,23 @@ query (void)
                           load_return_vals);
 
   gimp_register_load_handler(LOAD_PROC, "heic,heif", ""); // TODO: 'avci'
+
+
+  gimp_install_procedure (SAVE_PROC,
+			  _("Save HEIF images."),
+                          _("Save image in HEIF format (High Efficiency Image File Format)."),
+			  "Dirk Farin <farin@struktur.de>",
+			  "Dirk Farin <farin@struktur.de>",
+			  "2018",
+			  _("Save HEIF image"),
+			  "RGB*",
+			  GIMP_PLUGIN,
+			  G_N_ELEMENTS (save_args),
+			  0, // # return values
+			  save_args,
+                          NULL); // return values
+
+  gimp_register_save_handler(SAVE_PROC, "heic,heif", ""); // TODO: 'avci'
 }
 
 
@@ -292,6 +323,114 @@ gint32 load_heif(const gchar *filename, int interactive)
 }
 
 
+
+static gboolean
+save_image (const gchar  *filename,
+            gint32        image_ID,
+            gint32        drawable_ID,
+            GError **error)
+{
+  //GeglBuffer    *buffer;
+  //const Babl    *format = NULL;
+  //GimpImageType  dtype;
+  gint           width;
+  gint           height;
+
+  //buffer = gimp_drawable_get_buffer (drawable_ID);
+  //dtype = gimp_drawable_type (drawable_ID);
+  //width  = gegl_buffer_get_width  (buffer);
+  //height = gegl_buffer_get_height (buffer);
+
+  width  = gimp_drawable_width(drawable_ID);
+  height = gimp_drawable_height(drawable_ID);
+
+  printf("drawable size: %d x %d\n",width,height);
+
+  struct heif_image* image = NULL;
+  struct heif_error err = heif_image_create(width, height,
+                                            heif_colorspace_YCbCr,
+                                            heif_chroma_420,
+                                            &image);
+
+  int chroma_width  = (width +1)/2;
+  int chroma_height = (height+1)/2;
+
+  heif_image_add_plane(image, heif_channel_Y,  width, height, 8);
+  heif_image_add_plane(image, heif_channel_Cb, chroma_width, chroma_height, 8);
+  heif_image_add_plane(image, heif_channel_Cr, chroma_width, chroma_height, 8);
+
+  int stride;
+  uint8_t* data = heif_image_get_plane(image, heif_channel_Y, &stride);
+  int stride1,stride2;
+  uint8_t* data1 = heif_image_get_plane(image, heif_channel_Cb, &stride1);
+  uint8_t* data2 = heif_image_get_plane(image, heif_channel_Cr, &stride2);
+
+  GimpPixelRgn rgn_in;
+  GimpDrawable *drawable = gimp_drawable_get(drawable_ID);
+
+  gimp_pixel_rgn_init(&rgn_in, drawable,
+                      0,0,width,height, FALSE, FALSE);
+
+  uint8_t* mem = malloc(width*3);
+
+  int y;
+  for (y=0;y<height;y++) {
+    gimp_pixel_rgn_get_row(&rgn_in,
+                           mem, 0,y, width);
+
+    int x;
+    for (x=0;x<width;x++) {
+      (data + stride*y)[x] = mem[x*3];
+
+      (data1 + stride1*(y/2))[x/2] = 128;
+      (data2 + stride2*(y/2))[x/2] = 128;
+    }
+  }
+
+  gimp_drawable_detach(drawable);
+
+
+  struct heif_context* context = heif_context_alloc();
+  heif_context_new_heic(context);
+
+  struct heif_encoder* encoder;
+  int count = heif_context_get_encoders(context, heif_compression_HEVC, NULL,
+                                        &encoder, 1);
+  (void)count;
+
+  heif_encoder_init(encoder);
+
+  //heif_encoder_set_lossy_quality(encoder, quality);
+  //heif_encoder_set_lossless(encoder, lossless);
+  //heif_encoder_set_logging_level(encoder, logging_level);
+
+  struct heif_image_handle* handle;
+  err = heif_context_encode_image(context,
+                                  &handle,
+                                  image,
+                                  encoder);
+  if (err.code != 0) {
+    printf("error: %s\n",err.message);
+    //std::cerr << "Could not read HEIF file: " << error.message << "\n";
+    return 1;
+  }
+
+
+  heif_image_handle_release(handle);
+
+  heif_encoder_deinit(encoder);
+
+  err = heif_context_write_to_file(context, filename);
+
+
+  heif_context_free(context);
+  heif_image_release(image);
+
+  return TRUE;
+}
+
+
+
 static void
 run (const gchar      *name,
      gint              n_params,
@@ -312,9 +451,11 @@ run (const gchar      *name,
 #endif
   textdomain (GETTEXT_PACKAGE);
 
-  if (strcmp (name, LOAD_PROC) == 0) {
-    GimpRunMode run_mode = param[0].data.d_int32;
+  gimp_ui_init (PLUGIN_NAME, TRUE);
 
+  GimpRunMode run_mode = param[0].data.d_int32;
+
+  if (strcmp (name, LOAD_PROC) == 0) {
 
     // Make sure all the arguments are there
     if (n_params != 3)
@@ -339,6 +480,45 @@ run (const gchar      *name,
         status = GIMP_PDB_EXECUTION_ERROR;
       }
     }
+  }
+  else if (strcmp(name, SAVE_PROC) == 0) {
+
+    gint32 image_ID;
+    gint32 drawable_ID;
+
+    image_ID    = param[1].data.d_int32;
+    drawable_ID = param[2].data.d_int32;
+
+    if (run_mode == GIMP_RUN_INTERACTIVE ||
+        run_mode == GIMP_RUN_WITH_LAST_VALS) {
+
+      GimpExportReturn export = GIMP_EXPORT_CANCEL;
+
+      export = gimp_export_image (&image_ID, &drawable_ID, "TGA",
+                                  GIMP_EXPORT_CAN_HANDLE_RGB
+                                  // GIMP_EXPORT_CAN_HANDLE_GRAY    |  // TODO
+                                  // GIMP_EXPORT_CAN_HANDLE_ALPHA  // TODO
+                                  );
+
+      if (export == GIMP_EXPORT_CANCEL) {
+        values[0].data.d_status = GIMP_PDB_CANCEL;
+        return;
+      }
+
+
+
+      GError* error = NULL;
+      if (save_image (param[3].data.d_string, image_ID, drawable_ID,
+                      &error)) {
+          /*  Store psvals data  */
+        //gimp_set_data (SAVE_PROC, &tsvals, sizeof (tsvals));
+      }
+      else {
+        status = GIMP_PDB_EXECUTION_ERROR;
+      }
+    }
+
+
   }
   else {
     status = GIMP_PDB_CALLING_ERROR;

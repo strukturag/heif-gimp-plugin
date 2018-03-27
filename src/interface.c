@@ -206,8 +206,6 @@ gboolean dialog(struct heif_context* heif,
     return FALSE;
   }
 
-  gimp_ui_init (PLUGIN_NAME, TRUE);
-
   dlg = gimp_dialog_new (_("Load HEIF image content"), PLUGIN_NAME,
                          NULL, 0,
                          NULL, 0, //gimp_standard_help_func, "plug-in-template", // TODO

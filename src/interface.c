@@ -306,3 +306,74 @@ gboolean dialog(struct heif_context* heif,
 
   return run;
 }
+
+
+
+static void on_lossless_button_toggled (GtkToggleButton *source, gpointer user_data) {
+  GtkWidget* slider = GTK_WIDGET(user_data);
+  gboolean lossless = gtk_toggle_button_get_active (source);
+
+  gtk_widget_set_sensitive (slider, !lossless);
+}
+
+
+gboolean save_dialog(struct save_parameters* params)
+{
+  GtkWidget *dlg;
+  GtkWidget *main_vbox;
+  GtkWidget *hbox;
+  GtkWidget *label;
+  GtkWidget *lossless_button;
+  GtkWidget *quality_slider;
+  gboolean   run = FALSE;
+
+  //  int i;
+
+
+  dlg = gimp_dialog_new (_("Save HEIF image"), PLUGIN_NAME,
+                         NULL, 0,
+                         NULL, 0, //gimp_standard_help_func, "plug-in-template", // TODO
+			 GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+			 GTK_STOCK_OK,     GTK_RESPONSE_OK,
+			 NULL);
+
+  main_vbox = gtk_vbox_new (FALSE, 12);
+  gtk_container_set_border_width (GTK_CONTAINER (main_vbox), 12);
+  gtk_container_add (GTK_CONTAINER (GTK_DIALOG (dlg)->vbox), main_vbox);
+
+  lossless_button = gtk_check_button_new_with_label(_("Lossless"));
+  gtk_box_pack_start (GTK_BOX(main_vbox), lossless_button, FALSE, FALSE, 0);
+
+
+  hbox = gtk_hbox_new (FALSE, 10);
+  //gtk_container_border_width (GTK_CONTAINER (box2), 10);
+  label = gtk_label_new (_("Quality:"));
+  quality_slider = gtk_hscale_new_with_range (0, 100, 5);
+  gtk_scale_set_value_pos (GTK_SCALE(quality_slider), GTK_POS_RIGHT);
+  gtk_box_pack_start (GTK_BOX(hbox), label, FALSE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX(hbox), quality_slider, TRUE, TRUE, 0);
+  gtk_box_pack_start (GTK_BOX(main_vbox), hbox, TRUE, TRUE, 0);
+
+
+  gtk_range_set_value (GTK_RANGE(quality_slider), params->quality);
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON(lossless_button), params->lossless);
+  gtk_widget_set_sensitive (quality_slider, !params->lossless);
+
+  g_signal_connect (lossless_button, "toggled",
+                    G_CALLBACK (on_lossless_button_toggled),
+                    quality_slider);
+
+
+  gtk_widget_show_all(dlg);
+
+  run = (gimp_dialog_run (GIMP_DIALOG (dlg)) == GTK_RESPONSE_OK);
+
+  if (run) {
+    params->quality = gtk_range_get_value(GTK_RANGE(quality_slider));
+    params->lossless = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON(lossless_button));
+  }
+
+  gtk_widget_destroy (dlg);
+
+  return run;
+}

@@ -330,6 +330,13 @@ save_image (const gchar  *filename,
             gint32        drawable_ID,
             GError **error)
 {
+  struct save_parameters params;
+  params.lossless = FALSE;
+  params.quality = 75;
+
+  save_dialog(&params);
+
+
   // --- copy GIMP image into HEIF image
 
   gint           width;
@@ -376,8 +383,8 @@ save_image (const gchar  *filename,
 
   heif_encoder_init(encoder);
 
-  //heif_encoder_set_lossy_quality(encoder, quality);
-  //heif_encoder_set_lossless(encoder, lossless);
+  heif_encoder_set_lossy_quality(encoder, params.quality);
+  heif_encoder_set_lossless(encoder, params.lossless);
   //heif_encoder_set_logging_level(encoder, logging_level);
 
   struct heif_image_handle* handle;

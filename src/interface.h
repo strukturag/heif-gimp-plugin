@@ -31,4 +31,12 @@ gboolean   dialog (struct heif_context* heif,
                    uint32_t* selected_image);
 
 
+struct save_parameters
+{
+  gint quality;
+  gboolean lossless;
+};
+
+gboolean   save_dialog (struct save_parameters* params);
+
 #endif /* __INTERFACE_H__ */

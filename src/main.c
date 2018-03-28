@@ -374,7 +374,7 @@ save_image (const gchar  *filename,
                                         &encoder, 1);
   (void)count;
 
-  heif_encoder_init(encoder);
+  heif_encoder_start(encoder);
 
   heif_encoder_set_lossy_quality(encoder, params->quality);
   heif_encoder_set_lossless(encoder, params->lossless);
@@ -382,9 +382,9 @@ save_image (const gchar  *filename,
 
   struct heif_image_handle* handle;
   err = heif_context_encode_image(context,
-                                  &handle,
                                   image,
-                                  encoder);
+                                  encoder,
+                                  &handle);
   if (err.code != 0) {
     printf("error: %s\n",err.message);
     //std::cerr << "Could not read HEIF file: " << error.message << "\n";
@@ -393,8 +393,6 @@ save_image (const gchar  *filename,
 
 
   heif_image_handle_release(handle);
-
-  heif_encoder_deinit(encoder);
 
   err = heif_context_write_to_file(context, filename);
 

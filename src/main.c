@@ -468,7 +468,7 @@ run (const gchar      *name,
 
     struct save_parameters params;
     params.lossless = FALSE;
-    params.quality = 75;
+    params.quality = 50;
 
 
     GimpExportReturn export = GIMP_EXPORT_CANCEL;

@@ -344,26 +344,16 @@ save_image (const gchar  *filename,
   width  = gimp_drawable_width(drawable_ID);
   height = gimp_drawable_height(drawable_ID);
 
-  printf("drawable size: %d x %d\n",width,height);
-
   struct heif_image* image = NULL;
   struct heif_error err = heif_image_create(width, height,
-                                            heif_colorspace_YCbCr,
-                                            heif_chroma_420,
+                                            heif_colorspace_RGB,
+                                            heif_chroma_interleaved_24bit,
                                             &image);
 
-  int chroma_width  = (width +1)/2;
-  int chroma_height = (height+1)/2;
-
-  heif_image_add_plane(image, heif_channel_Y,  width, height, 8);
-  heif_image_add_plane(image, heif_channel_Cb, chroma_width, chroma_height, 8);
-  heif_image_add_plane(image, heif_channel_Cr, chroma_width, chroma_height, 8);
+  heif_image_add_plane(image, heif_channel_interleaved,  width, height, 24);
 
   int stride;
-  uint8_t* data = heif_image_get_plane(image, heif_channel_Y, &stride);
-  int stride1,stride2;
-  uint8_t* data1 = heif_image_get_plane(image, heif_channel_Cb, &stride1);
-  uint8_t* data2 = heif_image_get_plane(image, heif_channel_Cr, &stride2);
+  uint8_t* data = heif_image_get_plane(image, heif_channel_interleaved, &stride);
 
   GimpPixelRgn rgn_in;
   GimpDrawable *drawable = gimp_drawable_get(drawable_ID);
@@ -371,20 +361,10 @@ save_image (const gchar  *filename,
   gimp_pixel_rgn_init(&rgn_in, drawable,
                       0,0,width,height, FALSE, FALSE);
 
-  uint8_t* mem = malloc(width*3);
-
   int y;
   for (y=0;y<height;y++) {
     gimp_pixel_rgn_get_row(&rgn_in,
-                           mem, 0,y, width);
-
-    int x;
-    for (x=0;x<width;x++) {
-      (data + stride*y)[x] = mem[x*3];
-
-      (data1 + stride1*(y/2))[x/2] = 128;
-      (data2 + stride2*(y/2))[x/2] = 128;
-    }
+                           data + y*stride, 0,y, width);
   }
 
   gimp_drawable_detach(drawable);

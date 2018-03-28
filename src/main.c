@@ -110,7 +110,7 @@ query (void)
 			  "Dirk Farin <farin@struktur.de>",
 			  "Dirk Farin <farin@struktur.de>",
 			  "2018",
-			  _("Load HEIF image"),
+			  _("HEIF/HEIC"),
 			  NULL,
 			  GIMP_PLUGIN,
 			  G_N_ELEMENTS (load_args),
@@ -127,7 +127,7 @@ query (void)
 			  "Dirk Farin <farin@struktur.de>",
 			  "Dirk Farin <farin@struktur.de>",
 			  "2018",
-			  _("Save HEIF image"),
+			  _("HEIF/HEIC"),
 			  "RGB*",
 			  GIMP_PLUGIN,
 			  G_N_ELEMENTS (save_args),
@@ -330,16 +330,10 @@ save_image (const gchar  *filename,
             gint32        drawable_ID,
             GError **error)
 {
-  //GeglBuffer    *buffer;
-  //const Babl    *format = NULL;
-  //GimpImageType  dtype;
+  // --- copy GIMP image into HEIF image
+
   gint           width;
   gint           height;
-
-  //buffer = gimp_drawable_get_buffer (drawable_ID);
-  //dtype = gimp_drawable_type (drawable_ID);
-  //width  = gegl_buffer_get_width  (buffer);
-  //height = gegl_buffer_get_height (buffer);
 
   width  = gimp_drawable_width(drawable_ID);
   height = gimp_drawable_height(drawable_ID);
@@ -369,6 +363,8 @@ save_image (const gchar  *filename,
 
   gimp_drawable_detach(drawable);
 
+
+  // --- encode to HEIF file ---
 
   struct heif_context* context = heif_context_alloc();
   heif_context_new_heic(context);

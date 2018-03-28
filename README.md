@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/strukturag/heif-gimp-plugin.svg?branch=master)](https://travis-ci.org/strukturag/heif-gimp-plugin)
 
-This is a GIMP plugin for loading HEIF images (High Efficiency Image File Format).
+This is a GIMP plugin for loading and saving HEIF images (High Efficiency Image File Format).
 
 HEIF is a new image file format employing HEVC (h.265) image coding for the
 best compression ratios currently possible.
@@ -15,9 +15,14 @@ best compression ratios currently possible.
 
 ## Features
 
+Loader:
 * HEIF files can contain several images in one file. When opening such a file, a dialog will open to let you choose the image from a list of thumbnails.
 * alpha channels
 * Exif data
+
+Saver:
+* adjustable quality
+* lossless coding
 
 ## Installation
 

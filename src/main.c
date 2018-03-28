@@ -328,15 +328,9 @@ static gboolean
 save_image (const gchar  *filename,
             gint32        image_ID,
             gint32        drawable_ID,
+            const struct save_parameters* params,
             GError **error)
 {
-  struct save_parameters params;
-  params.lossless = FALSE;
-  params.quality = 75;
-
-  save_dialog(&params);
-
-
   // --- copy GIMP image into HEIF image
 
   gint           width;
@@ -383,8 +377,8 @@ save_image (const gchar  *filename,
 
   heif_encoder_init(encoder);
 
-  heif_encoder_set_lossy_quality(encoder, params.quality);
-  heif_encoder_set_lossless(encoder, params.lossless);
+  heif_encoder_set_lossy_quality(encoder, params->quality);
+  heif_encoder_set_lossless(encoder, params->lossless);
   //heif_encoder_set_logging_level(encoder, logging_level);
 
   struct heif_image_handle* handle;
@@ -472,36 +466,69 @@ run (const gchar      *name,
     image_ID    = param[1].data.d_int32;
     drawable_ID = param[2].data.d_int32;
 
-    if (run_mode == GIMP_RUN_INTERACTIVE ||
-        run_mode == GIMP_RUN_WITH_LAST_VALS) {
+    struct save_parameters params;
+    params.lossless = FALSE;
+    params.quality = 75;
 
-      GimpExportReturn export = GIMP_EXPORT_CANCEL;
 
-      export = gimp_export_image (&image_ID, &drawable_ID, "TGA",
-                                  GIMP_EXPORT_CAN_HANDLE_RGB
-                                  // GIMP_EXPORT_CAN_HANDLE_GRAY    |  // TODO
-                                  // GIMP_EXPORT_CAN_HANDLE_ALPHA  // TODO
-                                  );
+    GimpExportReturn export = GIMP_EXPORT_CANCEL;
 
-      if (export == GIMP_EXPORT_CANCEL) {
-        values[0].data.d_status = GIMP_PDB_CANCEL;
-        return;
+    switch (run_mode) {
+      case GIMP_RUN_INTERACTIVE:
+      case GIMP_RUN_WITH_LAST_VALS:
+        export = gimp_export_image (&image_ID, &drawable_ID, "HEIF",
+                                    GIMP_EXPORT_CAN_HANDLE_RGB
+                                    // GIMP_EXPORT_CAN_HANDLE_GRAY    |  // TODO
+                                    // GIMP_EXPORT_CAN_HANDLE_ALPHA  // TODO
+                                    );
+
+        if (export == GIMP_EXPORT_CANCEL) {
+          values[0].data.d_status = GIMP_PDB_CANCEL;
+          return;
+        }
+        break;
+      default:
+        break;
       }
 
 
+    switch (run_mode) {
+    case GIMP_RUN_INTERACTIVE:
+      gimp_get_data (SAVE_PROC, &params);
 
+      if (! save_dialog(&params))
+        status = GIMP_PDB_CANCEL;
+      break;
+
+    case GIMP_RUN_WITH_LAST_VALS:
+      gimp_get_data (SAVE_PROC, &params);
+      break;
+
+    case GIMP_RUN_NONINTERACTIVE:
+      /*  Make sure all the arguments are there!  */
+      if (n_params != 7) {
+        status = GIMP_PDB_CALLING_ERROR;
+      }
+      else
+        {
+          params.quality = (param[5].data.d_int32);
+          params.lossless = (param[6].data.d_int32);
+        }
+      break;
+    }
+
+
+    if (status == GIMP_PDB_SUCCESS) {
       GError* error = NULL;
-      if (save_image (param[3].data.d_string, image_ID, drawable_ID,
+      if (save_image (param[3].data.d_string, image_ID, drawable_ID, &params,
                       &error)) {
-          /*  Store psvals data  */
-        //gimp_set_data (SAVE_PROC, &tsvals, sizeof (tsvals));
+        /*  Store psvals data  */
+        gimp_set_data (SAVE_PROC, &params, sizeof (params));
       }
       else {
         status = GIMP_PDB_EXECUTION_ERROR;
       }
     }
-
-
   }
   else {
     status = GIMP_PDB_CALLING_ERROR;

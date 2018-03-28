@@ -368,7 +368,6 @@ save_image (const gchar  *filename,
   // --- encode to HEIF file ---
 
   struct heif_context* context = heif_context_alloc();
-  heif_context_new_heic(context);
 
   struct heif_encoder* encoder;
   int count = heif_context_get_encoders(context, heif_compression_HEVC, NULL,

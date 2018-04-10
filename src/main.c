@@ -339,13 +339,15 @@ save_image (const gchar  *filename,
   width  = gimp_drawable_width(drawable_ID);
   height = gimp_drawable_height(drawable_ID);
 
+  const gboolean has_alpha = gimp_drawable_has_alpha(drawable_ID);
+
   struct heif_image* image = NULL;
   struct heif_error err = heif_image_create(width, height,
                                             heif_colorspace_RGB,
-                                            heif_chroma_interleaved_24bit,
+                                            has_alpha ? heif_chroma_interleaved_32bit : heif_chroma_interleaved_24bit,
                                             &image);
 
-  heif_image_add_plane(image, heif_channel_interleaved,  width, height, 24);
+  heif_image_add_plane(image, heif_channel_interleaved,  width, height, has_alpha ? 32 : 24);
 
   int stride;
   uint8_t* data = heif_image_get_plane(image, heif_channel_interleaved, &stride);
@@ -386,11 +388,9 @@ save_image (const gchar  *filename,
                                   encoder,
                                   &handle);
   if (err.code != 0) {
-    printf("error: %s\n",err.message);
-    //std::cerr << "Could not read HEIF file: " << error.message << "\n";
+    fprintf(stderr, "error: %s\n",err.message);
     return 1;
   }
-
 
   heif_image_handle_release(handle);
 
@@ -474,9 +474,9 @@ run (const gchar      *name,
       case GIMP_RUN_INTERACTIVE:
       case GIMP_RUN_WITH_LAST_VALS:
         export = gimp_export_image (&image_ID, &drawable_ID, "HEIF",
-                                    GIMP_EXPORT_CAN_HANDLE_RGB
+                                    GIMP_EXPORT_CAN_HANDLE_RGB |
                                     // GIMP_EXPORT_CAN_HANDLE_GRAY    |  // TODO
-                                    // GIMP_EXPORT_CAN_HANDLE_ALPHA  // TODO
+                                    GIMP_EXPORT_CAN_HANDLE_ALPHA
                                     );
 
         if (export == GIMP_EXPORT_CANCEL) {

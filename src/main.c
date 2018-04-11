@@ -372,7 +372,7 @@ save_image (const gchar  *filename,
   struct heif_context* context = heif_context_alloc();
 
   struct heif_encoder* encoder;
-  err = heif_get_encoder_for_format(context, heif_compression_HEVC, &encoder);
+  err = heif_context_get_encoder_for_format(context, heif_compression_HEVC, &encoder);
   (void)err;
 
   heif_encoder_set_lossy_quality(encoder, params->quality);

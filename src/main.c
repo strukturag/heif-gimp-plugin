@@ -223,9 +223,9 @@ gint32 load_heif(const gchar *filename, int interactive)
                           NULL);
 
   if (err.code) {
+    gimp_message(err.message);
     heif_image_handle_release(handle);
     heif_context_free(ctx);
-    gimp_message(err.message);
     return LOAD_HEIF_ERROR;
   }
 

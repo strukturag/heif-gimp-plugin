@@ -372,11 +372,8 @@ save_image (const gchar  *filename,
   struct heif_context* context = heif_context_alloc();
 
   struct heif_encoder* encoder;
-  int count = heif_context_get_encoders(context, heif_compression_HEVC, NULL,
-                                        &encoder, 1);
-  (void)count;
-
-  heif_encoder_start(encoder);
+  err = heif_get_encoder_for_format(context, heif_compression_HEVC, &encoder);
+  (void)err;
 
   heif_encoder_set_lossy_quality(encoder, params->quality);
   heif_encoder_set_lossless(encoder, params->lossless);
@@ -399,6 +396,8 @@ save_image (const gchar  *filename,
 
   heif_context_free(context);
   heif_image_release(image);
+
+  heif_encoder_release(encoder);
 
   return TRUE;
 }

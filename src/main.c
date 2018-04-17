@@ -383,6 +383,7 @@ save_image (const gchar  *filename,
   err = heif_context_encode_image(context,
                                   image,
                                   encoder,
+                                  NULL,
                                   &handle);
   if (err.code != 0) {
     fprintf(stderr, "error: %s\n",err.message);

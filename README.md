@@ -7,6 +7,8 @@ This is a GIMP plugin for loading and saving HEIF images (High Efficiency Image 
 HEIF is a new image file format employing HEVC (h.265) image coding for the
 best compression ratios currently possible.
 
+**Note: this plugin is part of GIMP v2.10.2. You only need to manually install this plugin if you are running a lower version of GIMP.**
+
 
 ## Screenshot
 

@@ -35,6 +35,7 @@ fi
 
 if [ ! -z "$CHECK_LICENSES" ]; then
     # For licensecheck
+    sudo apt-get update
     INSTALL_PACKAGES="$INSTALL_PACKAGES \
         devscripts \
         "

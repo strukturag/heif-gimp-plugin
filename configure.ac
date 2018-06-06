@@ -119,7 +119,7 @@ PKG_CHECK_MODULES([libheif], [libheif], [
 ], [have_libheif="no"])
 AM_CONDITIONAL([HAVE_HEIF], [test "x$have_libheif" = "xyes"])
 
-
+CFLAGS="$CFLAGS -Wno-error=deprecated-declarations"
 
 AC_CONFIG_FILES([
 Makefile

@@ -373,7 +373,12 @@ save_image (const gchar  *filename,
 
   struct heif_encoder* encoder;
   err = heif_context_get_encoder_for_format(context, heif_compression_HEVC, &encoder);
-  (void)err;
+  if (err.code != 0) {
+    fprintf(stderr, "error getting HEVC encoder: %s (%d)\n", err.message, err.code);
+    heif_context_free(context);
+    heif_image_release(image);
+    return FALSE;
+  }
 
   heif_encoder_set_lossy_quality(encoder, params->quality);
   heif_encoder_set_lossless(encoder, params->lossless);
@@ -386,18 +391,26 @@ save_image (const gchar  *filename,
                                   NULL,
                                   &handle);
   if (err.code != 0) {
-    fprintf(stderr, "error: %s\n",err.message);
-    return 1;
+    fprintf(stderr, "error encoding image: %s (%d)\n", err.message, err.code);
+    heif_encoder_release(encoder);
+    heif_context_free(context);
+    heif_image_release(image);
+    return FALSE;
   }
 
   heif_image_handle_release(handle);
 
   err = heif_context_write_to_file(context, filename);
-
+  if (err.code != 0) {
+    fprintf(stderr, "error writing image to file: %s (%d)\n", err.message, err.code);
+    heif_encoder_release(encoder);
+    heif_context_free(context);
+    heif_image_release(image);
+    return FALSE;
+  }
 
   heif_context_free(context);
   heif_image_release(image);
-
   heif_encoder_release(encoder);
 
   return TRUE;

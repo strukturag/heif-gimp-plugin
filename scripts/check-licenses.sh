@@ -21,7 +21,7 @@ set -eu
 #
 
 echo "Checking licenses..."
-CHECK_RESULT=`/usr/bin/licensecheck --recursive --ignore 'emscripten|libde265' .`
+CHECK_RESULT=`/usr/bin/licensecheck --recursive --ignore 'emscripten|libde265|\\.git' .`
 
 # Files that are public domain or have other known-good license headers which licensecheck doesn't detect.
 KNOWN_GOOD_FILES=(

@@ -65,6 +65,6 @@ if [ -z "$CHECK_LICENSES" ]; then
     ./autogen.sh
     ./configure \
         --prefix=$BUILD_ROOT/libheif/dist
-    make && make install
+    make && sudo make install
     popd
 fi

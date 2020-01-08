@@ -12,7 +12,6 @@ PROJECT="GIMP HEIF format plugin"
 TEST_TYPE=-f
 FILE=src/main.c
 
-AUTOCONF_REQUIRED_VERSION=2.54
 GLIB_REQUIRED_VERSION=2.0.0
 INTLTOOL_REQUIRED_VERSION=0.17
 
@@ -41,12 +40,8 @@ echo
 
 DIE=0
 
-echo -n "checking for autoconf >= $AUTOCONF_REQUIRED_VERSION ... "
-if (autoconf --version) < /dev/null > /dev/null 2>&1; then
-    VER=`autoconf --version \
-         | grep -iw autoconf | sed "s/.* \([0-9.]*\)[-a-z0-9]*$/\1/"`
-    check_version $VER $AUTOCONF_REQUIRED_VERSION
-else
+echo "checking for autoconf ... "
+if ! (autoconf --version) < /dev/null > /dev/null 2>&1; then
     echo
     echo "  You must have autoconf installed to compile $PROJECT."
     echo "  Download the appropriate package for your distribution,"

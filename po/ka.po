@@ -1,0 +1,80 @@
+# Georgian translation for gimp20-heif-plugin.
+# Copyright (C) 2023 gimp20-heif-plugin's authors
+# This file is distributed under the same license as the gimp20-heif-plugin package.
+# Temuri Doghonadze <temuri.doghonadze@gmail.com>, 2023.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gimp-heif-plugin\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-02-16 08:23+0100\n"
+"PO-Revision-Date: 2023-02-16 08:57+0100\n"
+"Last-Translator: Temuri Doghonadze <temuri.doghonadze@gmail.com>\n"
+"Language-Team: Georgian <(nothing)>\n"
+"Language: ka\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2.2\n"
+
+#: ../src/interface.c:82
+msgid "primary"
+msgstr "ძირითადი"
+
+#: ../src/interface.c:209
+msgid "Load HEIF image content"
+msgstr "HEIF გამოსახულების შემცველობის ჩატვირთვა"
+
+#: ../src/interface.c:220
+msgid "Select image"
+msgstr "აირჩიეთ გამოსახულება"
+
+#. int i;
+#: ../src/interface.c:333
+msgid "Save HEIF image"
+msgstr "HEIF გამოსახულების შენახვა"
+
+#: ../src/interface.c:344
+msgid "Lossless"
+msgstr "კარგვის გარეშე"
+
+#. gtk_container_border_width (GTK_CONTAINER (box2), 10);
+#: ../src/interface.c:350
+msgid "Quality:"
+msgstr "ხარისხი:"
+
+#: ../src/main.c:109
+msgid "Load HEIF images."
+msgstr "HEIF გამოსახულების ჩატვირთვა."
+
+#: ../src/main.c:110
+msgid ""
+"Load image stored in HEIF format (High Efficiency Image File Format). "
+"Typical suffices for HEIF files are .heif, .heic."
+msgstr ""
+"HEIF ფორმატში დამახსოვრებული გამოსახულების ჩატვირთვა (მაღალი "
+"ეფექტურობის გამოსახულების ფაილის ფორმატი). ტიპიურ სუფიქსებს HEIF "
+"ფაილებისთვის წარმოადგენენ .heif და .heic."
+
+#: ../src/main.c:114 ../src/main.c:133
+msgid "HEIF/HEIC"
+msgstr "HEIF/HEIC"
+
+#: ../src/main.c:128
+msgid "Save HEIF images."
+msgstr "HEIF გამოსახულებების შენახვა."
+
+#: ../src/main.c:129
+msgid "Save image in HEIF format (High Efficiency Image File Format)."
+msgstr ""
+"გამოსახულების HEIF ფორმატში შენახვა (მაღალი ეფექტურობის გამოსახულების "
+"ფაილის ფორმატი)."
+
+#: ../src/main.c:168
+msgid "Input file contains no readable images"
+msgstr "შეყვანილი ფაილი წაკითხვად გამოსახულებებს არ შეიცავს"
+
+#: ../src/main.c:246
+msgid "image content"
+msgstr "გამოსახულების შემცველობა"

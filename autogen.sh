@@ -12,8 +12,6 @@ PROJECT="GIMP HEIF format plugin"
 TEST_TYPE=-f
 FILE=src/main.c
 
-AUTOCONF_REQUIRED_VERSION=2.54
-AUTOMAKE_REQUIRED_VERSION=1.6
 GLIB_REQUIRED_VERSION=2.0.0
 INTLTOOL_REQUIRED_VERSION=0.17
 
@@ -42,12 +40,8 @@ echo
 
 DIE=0
 
-echo -n "checking for autoconf >= $AUTOCONF_REQUIRED_VERSION ... "
-if (autoconf --version) < /dev/null > /dev/null 2>&1; then
-    VER=`autoconf --version \
-         | grep -iw autoconf | sed "s/.* \([0-9.]*\)[-a-z0-9]*$/\1/"`
-    check_version $VER $AUTOCONF_REQUIRED_VERSION
-else
+echo "checking for autoconf ... "
+if ! (autoconf --version) < /dev/null > /dev/null 2>&1; then
     echo
     echo "  You must have autoconf installed to compile $PROJECT."
     echo "  Download the appropriate package for your distribution,"
@@ -55,43 +49,13 @@ else
     DIE=1;
 fi
 
-echo -n "checking for automake >= $AUTOMAKE_REQUIRED_VERSION ... "
-if (automake-1.17 --version) < /dev/null > /dev/null 2>&1; then
-   AUTOMAKE=automake-1.17
-   ACLOCAL=aclocal-1.17
-elif (automake-1.16 --version) < /dev/null > /dev/null 2>&1; then
-   AUTOMAKE=automake-1.16
-   ACLOCAL=aclocal-1.16
-elif (automake-1.15 --version) < /dev/null > /dev/null 2>&1; then
-   AUTOMAKE=automake-1.15
-   ACLOCAL=aclocal-1.15
-elif (automake-1.14 --version) < /dev/null > /dev/null 2>&1; then
-   AUTOMAKE=automake-1.14
-   ACLOCAL=aclocal-1.14
-elif (automake-1.9 --version) < /dev/null > /dev/null 2>&1; then
-   AUTOMAKE=automake-1.9
-   ACLOCAL=aclocal-1.9
-elif (automake-1.8 --version) < /dev/null > /dev/null 2>&1; then
-   AUTOMAKE=automake-1.8
-   ACLOCAL=aclocal-1.8
-elif (automake-1.7 --version) < /dev/null > /dev/null 2>&1; then
-   AUTOMAKE=automake-1.7
-   ACLOCAL=aclocal-1.7
-elif (automake-1.6 --version) < /dev/null > /dev/null 2>&1; then
-   AUTOMAKE=automake-1.6
-   ACLOCAL=aclocal-1.6
-else
+echo "checking for automake ... "
+if ! (automake --version) < /dev/null > /dev/null 2>&1; then
     echo
     echo "  You must have automake 1.6 or newer installed to compile $PROJECT."
     echo "  Download the appropriate package for your distribution,"
     echo "  or get the source tarball at ftp://ftp.gnu.org/pub/gnu/automake/"
     DIE=1
-fi
-
-if test x$AUTOMAKE != x; then
-    VER=`$AUTOMAKE --version \
-         | grep automake | sed "s/.* \([0-9.]*\)[-a-z0-9]*$/\1/"`
-    #check_version $VER $AUTOMAKE_REQUIRED_VERSION
 fi
 
 echo -n "checking for glib-gettextize >= $GLIB_REQUIRED_VERSION ... "
@@ -151,7 +115,7 @@ fi
 
 if test -z "$ACLOCAL_FLAGS"; then
 
-    acdir=`$ACLOCAL --print-ac-dir`
+    acdir=`aclocal --print-ac-dir`
     m4list="glib-gettext.m4 intltool.m4"
 
     for file in $m4list
@@ -169,17 +133,17 @@ if test -z "$ACLOCAL_FLAGS"; then
     done
 fi
 
-$ACLOCAL $ACLOCAL_FLAGS
+aclocal $ACLOCAL_FLAGS
 RC=$?
 if test $RC -ne 0; then
-   echo "$ACLOCAL gave errors. Please fix the error conditions and try again."
+   echo "aclocal gave errors. Please fix the error conditions and try again."
    exit 1
 fi
 
 # optionally feature autoheader
 (autoheader --version)  < /dev/null > /dev/null 2>&1 && autoheader || exit 1
 
-$AUTOMAKE --add-missing --copy || exit 1
+automake --add-missing --copy || exit 1
 autoconf || exit 1
 
 glib-gettextize --copy --force || exit 1
